@@ -383,10 +383,23 @@ document.addEventListener('input', function (e) {
   }
 });
 
+function atualizarResumoDoGrupo(idSuffix) {
+  const tabela = document.querySelector(`#tabela-${idSuffix} tbody`);
+  const linhas = tabela.querySelectorAll("tr");
+  const alturaMontante = document.querySelector(`#collapse-${idSuffix} input[name='altura_montante']`)?.value || "";
+
+  const primeiro = linhas[0]?.querySelector("td:nth-child(2)")?.textContent?.trim() || "";
+  const segundo = linhas[1]?.querySelector("td:nth-child(2)")?.textContent?.trim() || "";
+
+  const resumo = `${primeiro}\nem ${segundo}\nAltura do Montante: ${alturaMontante}\nAltura Final:\nFixação:`;
+
+  const textarea = document.getElementById(`resumo-${idSuffix}`);
+  if (textarea) textarea.value = resumo;
+}
+
+
 // Pare aqui
 function criarBlocoDeProposta(nomeGrupo = "", ambiente = "") {
-
-
   const idSuffix = `bloco-${blocoIndex++}`;
   const container = document.getElementById("blocosProdutosContainer");
   if (!container) {
@@ -427,21 +440,12 @@ function criarBlocoDeProposta(nomeGrupo = "", ambiente = "") {
               </span>
             </button>
             <div class="d-flex align-items-center gap-2 ms-4">
-              <input
-                type="text"
-                class="form-control form-control-sm"
-                placeholder="Ambiente"
-                value="${ambiente || ""}"
-                data-id-grupo="${idSuffix}"
-                title="Digite o nome do ambiente"
-                ${estaEditandoModelo ? 'style="display:none;"' : ''}
-              >
+              <input type="text" class="form-control form-control-sm" placeholder="Ambiente"
+                value="${ambiente || ""}" data-id-grupo="${idSuffix}" title="Digite o nome do ambiente"
+                ${estaEditandoModelo ? 'style="display:none;"' : ''}>
               <button class="btn btn-outline-danger btn-sm" type="button" onclick="removerBloco('${idSuffix}')" title="Excluir grupo">Excluir</button>
-          <button class="btn btn-outline-secondary btn-sm" type="button"
-        onclick="duplicarBlocoViaDOM('${idSuffix}')"
-        title="Duplicar grupo">Duplicar</button>
-
-              </div>
+              <button class="btn btn-outline-secondary btn-sm" type="button" onclick="duplicarBlocoViaDOM('${idSuffix}')" title="Duplicar grupo">Duplicar</button>
+            </div>
           </div>
         </h2>
         <div id="collapse-${idSuffix}" class="accordion-collapse collapse" data-bs-parent="#accordion-${idSuffix}">
@@ -463,7 +467,7 @@ function criarBlocoDeProposta(nomeGrupo = "", ambiente = "") {
                         <div class="col-6">
                           <label class="form-label">${param.replace(/_/g, ' ')}</label>
                           <input type="text" name="${param}" class="form-control form-control-sm"
-                            ${(!estaEditandoModelo && !["altura_montante", "numero_montantes", "numero_protecoes", "descricao","comissao_arquiteta","margem_negociacao"].includes(param))
+                            ${(!estaEditandoModelo && !["altura_montante", "numero_montantes", "numero_protecoes", "descricao", "comissao_arquiteta", "margem_negociacao","margem_seguranca"].includes(param))
                               ? "readonly style='background:#f3f3f3'" : ""}>
                         </div>
                       `).join("")}
@@ -512,6 +516,10 @@ function criarBlocoDeProposta(nomeGrupo = "", ambiente = "") {
                       </tr>
                     </tfoot>
                   </table>
+                  <div class="mt-3">
+                    <label class="form-label">Resumo do Grupo</label>
+                    <textarea id="resumo-${idSuffix}" class="form-control form-control-sm" rows="6" ></textarea>
+                  </div>
                 </div>
               </div>
             </div>
@@ -525,31 +533,45 @@ function criarBlocoDeProposta(nomeGrupo = "", ambiente = "") {
 
   const tbody = bloco.querySelector("tbody");
   if (tbody) {
-    const observer = new MutationObserver(() => {
+    const observer = new MutationObserver(() => atualizarResumoDoGrupo(idSuffix));
+    observer.observe(tbody, { childList: true, subtree: true });
+
+    // Drag-and-drop
+    const dragObserver = new MutationObserver(() => {
       const linhas = tbody.querySelectorAll("tr");
       linhas.forEach(linha => {
         if (!linha.hasAttribute("draggable")) {
           linha.setAttribute("draggable", "true");
           linha.addEventListener("dragstart", () => linha.classList.add("dragging"));
-          linha.addEventListener("dragend", () => linha.classList.remove("dragging"));
+          linha.addEventListener("dragend", () => {
+            linha.classList.remove("dragging");
+            atualizarResumoDoGrupo(idSuffix);
+          });
         }
       });
     });
-    observer.observe(tbody, { childList: true });
+    dragObserver.observe(tbody, { childList: true, subtree: true });
+  }
+
+  // Altura montante reativa
+  const inputAltura = bloco.querySelector(`input[name='altura_montante']`);
+  if (inputAltura) {
+    inputAltura.addEventListener("input", () => atualizarResumoDoGrupo(idSuffix));
   }
 
   setTimeout(() => {
     if (typeof ativarRecalculoEmTodasTabelas === "function") ativarRecalculoEmTodasTabelas();
     if (typeof preencherValoresFinanceiros === "function") preencherValoresFinanceiros(idSuffix);
     if (typeof simularFocusEBlurEmTodosCamposFormula === "function") simularFocusEBlurEmTodosCamposFormula();
+    atualizarResumoDoGrupo(idSuffix); // primeira renderização
   }, 1000);
-  if (window.location.pathname.includes("criar.html")) {
-  setTimeout(() => {
-    atualizarPrecosOmieNaDOM();
-    ativarInputsDescricaoComDelay()
-  }, 1000); // Aguarda 1 segundo para garantir que tudo esteja carregado
-}
 
+  if (window.location.pathname.includes("criar.html")) {
+    setTimeout(() => {
+      atualizarPrecosOmieNaDOM();
+      ativarInputsDescricaoComDelay();
+    }, 1000);
+  }
 
   return idSuffix;
 }

@@ -1,9 +1,7 @@
-/* ============================================================
-   GERA ORÇAMENTO PARA IMPRESSÃO  – versão com VALIDAÇÃO
-   ============================================================ */
 function gerarOrcamentoParaImpressao() {
-  abrirTodasSanfonas()
-  /* ---------- 1. VALIDA CAMPOS OBRIGATÓRIOS ---------- */
+  abrirTodasSanfonas();
+
+  // ---------- 1. VALIDA CAMPOS OBRIGATÓRIOS ----------
   const idsObrigatorios = [
     "numeroOrcamento",
     "dataOrcamento",
@@ -19,11 +17,11 @@ function gerarOrcamentoParaImpressao() {
 
   idsObrigatorios.forEach(id => {
     const el = document.getElementById(id);
-    if (!el) return;                              // campo não existe
+    if (!el) return;
     const valor = (el.value || el.textContent || "").trim();
     if (!valor) {
       pendentes.push(el);
-      el.classList.add("campo-pendente");         // borda/vermelho
+      el.classList.add("campo-pendente");
     } else {
       el.classList.remove("campo-pendente");
     }
@@ -34,13 +32,13 @@ function gerarOrcamentoParaImpressao() {
       `Existem ${pendentes.length} campo(s) obrigatório(s) vazio(s).\n` +
       `Eles foram destacados em vermelho.\n\nDeseja continuar mesmo assim?`
     );
-    return;                       // aborta impressão
+    if (!continuar) return;
   }
 
-  /* ---------- 2. FUNÇÃO AUXILIAR ---------- */
+  // ---------- 2. FUNÇÃO AUXILIAR ----------
   const getValue = id => document.getElementById(id)?.value || "-";
 
-  /* ---------- 3. COLETA DADOS GERAIS ---------- */
+  // ---------- 3. COLETA DADOS GERAIS ----------
   const dados = {
     numero:             getValue("numeroOrcamento"),
     data:               getValue("dataOrcamento"),
@@ -60,27 +58,27 @@ function gerarOrcamentoParaImpressao() {
                ?.selectedOptions[0]?.textContent || "-"
   };
 
-  /* ---------- 4. DADOS DO CLIENTE ---------- */
-  const clienteWrapper      = document.querySelector(".cliente-item");
-  dados.nomeCliente         = clienteWrapper?.querySelector(".razaoSocial")?.value   || "-";
-  dados.cpfCnpj             = clienteWrapper?.querySelector(".cpfCnpj")?.value       || "-";
-  dados.telefoneCliente     = clienteWrapper?.querySelector(".telefoneCliente")?.value || "-";
+  // ---------- 4. DADOS DO CLIENTE ----------
+  const clienteWrapper = document.querySelector(".cliente-item");
+  dados.nomeCliente     = clienteWrapper?.querySelector(".razaoSocial")?.value || "-";
+  dados.cpfCnpj         = clienteWrapper?.querySelector(".cpfCnpj")?.value || "-";
+  dados.telefoneCliente = clienteWrapper?.querySelector(".telefoneCliente")?.value || "-";
 
-  /* ---------- 5. PRODUTOS / GRUPOS ---------- */
-  let totalGeral   = 0;
-  let corpoHTML    = "";
+  // ---------- 5. PRODUTOS / GRUPOS ----------
+  let totalGeral = 0;
+  let corpoHTML = "";
   const produtosPorAmbiente = {};
 
-  const gruposContainers = document.querySelectorAll(
-    '#included-products-container > div[data-group]'
-  );
+  const gruposContainers = document.querySelectorAll('#included-products-container > div[data-group]');
 
   gruposContainers.forEach(container => {
-    const grupo          = container.getAttribute("data-group");
-    const inputAmbiente  = container.querySelector("input[placeholder='Descreva o ambiente...']");
-    const nomeAmbiente   = inputAmbiente?.value.trim() || "Sem Ambiente";
-    const produtosGrupo  = includedProducts.filter(p => p.class === grupo);
+    const grupo = container.getAttribute("data-group");
+    const inputAmbiente = container.querySelector("input[placeholder='Descreva o ambiente...']");
+    const nomeAmbiente = inputAmbiente?.value.trim() || "Sem Ambiente";
+    const produtosGrupo = includedProducts.filter(p => p.class === grupo);
     if (!produtosGrupo.length) return;
+
+    const resumoGrupo = document.getElementById(`resumo-${grupo}`)?.value.trim() || "";
 
     (produtosPorAmbiente[nomeAmbiente] ||= []).push({
       grupo,
@@ -88,15 +86,16 @@ function gerarOrcamentoParaImpressao() {
       unidade:     groupPopupsData[grupo]?.unidade_medida || "-",
       nomeProduto: produtosGrupo[0]?.descricao            || "-",
       observacao:  container.querySelector("td.editable-observacoes")?.textContent.trim() || "",
+      resumoGrupo,
       totalGrupo:  produtosGrupo.reduce(
                     (acc, p) => acc + (parseFloat(p.cost || 0) * parseFloat(p.quantity || 0)), 0)
     });
   });
 
-  /* ---------- 6. MONTA HTML POR AMBIENTE ---------- */
+  // ---------- 6. MONTA HTML POR AMBIENTE ----------
   Object.entries(produtosPorAmbiente).forEach(([ambiente, grupos]) => {
     let totalAmbiente = 0;
-    let blocos        = "";
+    let blocos = "";
 
     grupos.forEach((g, i) => {
       totalAmbiente += g.totalGrupo;
@@ -107,7 +106,9 @@ function gerarOrcamentoParaImpressao() {
           <div class="div3 border p-2">${g.unidade}</div>
           <div class="div4 border p-2">${g.nomeProduto}</div>
           <div class="div6 border p-2">${g.observacao}</div>
-        </div>`;
+        </div>
+        ${g.resumoGrupo ? `<div class="border p-2 small text-muted"><strong>Resumo do Grupo:</strong><br>${g.resumoGrupo}</div>` : ""}
+      `;
     });
 
     corpoHTML += `
@@ -115,7 +116,8 @@ function gerarOrcamentoParaImpressao() {
         <div class="fw-bold border p-2 bg-light text-center">AMBIENTE: ${ambiente.toUpperCase()}</div>
         ${blocos}
         <div class="border p-2 text-end fw-bold bg-light">Total do Ambiente: R$ ${totalAmbiente.toFixed(2).replace('.', ',')}</div>
-      </div>`;
+      </div>
+    `;
 
     totalGeral += totalAmbiente;
   });
@@ -126,9 +128,10 @@ function gerarOrcamentoParaImpressao() {
       <strong>Prazo:</strong><br>${dados.prazos}<br><br>
       <strong>Condições de Pagamento:</strong><br>${dados.condicao}<br><br>
       <strong>Condições Gerais:</strong><br>${dados.condicoesGerais}
-    </div>`;
+    </div>
+  `;
 
-  /* ---------- 7. HTML COMPLETO PARA IMPRESSÃO ---------- */
+  // ---------- 7. HTML COMPLETO PARA IMPRESSÃO ----------
   const htmlCompleto = `
     <html>
       <head>
@@ -137,8 +140,10 @@ function gerarOrcamentoParaImpressao() {
         <style>
           body { padding: 40px; font-family: Arial, sans-serif; font-size: 13px; }
           .parent { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); }
-          .div1 { grid-area: 1 / 1 / 6 / 2; } .div2 { grid-area: 1 / 2 / 2 / 3; }
-          .div3 { grid-area: 1 / 3 / 2 / 4; } .div4 { grid-area: 1 / 4 / 2 / 6; }
+          .div1 { grid-area: 1 / 1 / 6 / 2; }
+          .div2 { grid-area: 1 / 2 / 2 / 3; }
+          .div3 { grid-area: 1 / 3 / 2 / 4; }
+          .div4 { grid-area: 1 / 4 / 2 / 6; }
           .div6 { grid-area: 2 / 2 / 4 / 6; }
         </style>
       </head>
@@ -174,9 +179,10 @@ function gerarOrcamentoParaImpressao() {
 
         ${corpoHTML}
       </body>
-    </html>`;
+    </html>
+  `;
 
-  /* ---------- 8. IMPRESSÃO ---------- */
+  // ---------- 8. IMPRESSÃO ----------
   const printWindow = window.open("", "_blank");
   if (!printWindow) return;
   printWindow.document.open();
@@ -184,15 +190,14 @@ function gerarOrcamentoParaImpressao() {
   printWindow.document.close();
   printWindow.focus();
 
- setTimeout(() => {
-  printWindow.print();
-}, 1000);
-  marcarEnviadoParaCliente() 
+  setTimeout(() => {
+    printWindow.print();
+  }, 1000);
+
+  marcarEnviadoParaCliente();
 }
 
-/* ========= CSS para destacar campos vazios ========= */
+// ---------- CSS DESTACAR CAMPOS OBRIGATÓRIOS ----------
 const styleTag = document.createElement("style");
-styleTag.textContent = `
-  .campo-pendente { border:2px solid #dc3545 !important; }
-`;
+styleTag.textContent = `.campo-pendente { border:2px solid #dc3545 !important; }`;
 document.head.appendChild(styleTag);

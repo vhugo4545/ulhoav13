@@ -40,7 +40,8 @@ function gerarOrcamentoParaImpressaoCompleta() {
     enderecoObra: `${getValue("rua")}, ${getValue("numero")}, ${getValue("bairro")} - ${getValue("complemento")} - ${getValue("cidade")}/${getValue("estado")} - CEP: ${getValue("cep")}`,
     contatoResponsavel: document.querySelector(".telefoneCliente")?.value || "-",
     prazos: getValue("prazosArea"),
-    condicao: getValue("condicaoPagamento"),
+   condicao: document.getElementById("condicaoPagamento")?.selectedOptions[0]?.textContent.trim() || "-",
+
     condicoesGerais: getValue("condicoesGerais"),
     vendedor: document.getElementById("vendedorResponsavel")?.selectedOptions[0]?.textContent || "-"
   };
@@ -52,54 +53,44 @@ function gerarOrcamentoParaImpressaoCompleta() {
 
   let totalGeral = 0;
   let corpoHTML = "";
-  const produtosPorAmbiente = {};
 
   document.querySelectorAll("table[id^='tabela-bloco-']").forEach(tabela => {
     const grupoId = tabela.id.replace("tabela-", "");
     const inputAmbiente = document.querySelector(`input[data-id-grupo='${grupoId}'][placeholder='Ambiente']`);
     const nomeAmbiente = inputAmbiente?.value.trim() || "Sem Ambiente";
 
-    const linhaProdutoPrincipal = tabela.querySelector("tbody tr");
-    if (!linhaProdutoPrincipal) return;
+    const linhaProduto = tabela.querySelector("tbody tr");
+    if (!linhaProduto) return;
 
-    const descricao = linhaProdutoPrincipal.querySelectorAll("td")[1]?.textContent.trim() || "-";
-    const qtd = linhaProdutoPrincipal.querySelector("input.quantidade")?.value || "1";
+    const colunas = linhaProduto.querySelectorAll("td");
+    const descricao = colunas[1]?.textContent.trim() || "-";
+    const qtd = linhaProduto.querySelector("input.quantidade")?.value || "1";
 
-    const total = parseFloat(
+    const resumoGrupo = document.getElementById(`resumo-${grupoId}`)?.value?.trim() || "";
+
+    const totalGrupo = parseFloat(
       tabela.querySelector("tfoot td[colspan='6'] strong")?.textContent.replace(/[^\d,\.]/g, '').replace(',', '.') || "0"
     );
 
-    (produtosPorAmbiente[nomeAmbiente] ||= []).push({ descricao, qtd, total });
-  });
-
-  Object.entries(produtosPorAmbiente).forEach(([ambiente, produtos]) => {
-    let totalAmbiente = 0;
-    let htmlProdutos = "";
-
-    produtos.forEach(prod => {
-      totalAmbiente += prod.total;
-      htmlProdutos += `
-        <tr>
-          <td>${prod.descricao}</td>
-          <td>${prod.qtd}</td>
-        </tr>`;
-    });
-
     corpoHTML += `
       <div class="mt-4 border">
-        <div class="fw-bold border p-2 bg-light text-center">AMBIENTE: ${ambiente.toUpperCase()}</div>
+        <div class="fw-bold border p-2 bg-light text-center">AMBIENTE: ${nomeAmbiente.toUpperCase()}</div>
         <table class="table table-sm table-bordered w-100">
           <thead class="table-light">
             <tr><th>Descrição</th><th>Quantidade</th></tr>
           </thead>
           <tbody>
-            ${htmlProdutos}
+            <tr>
+              <td>${descricao}</td>
+              <td>${qtd}</td>
+            </tr>
+            ${resumoGrupo ? `<tr><td colspan="2"><em>Resumo do Grupo: ${resumoGrupo}</em></td></tr>` : ""}
           </tbody>
         </table>
-        <div class="border p-2 text-end fw-bold bg-light">Total do Ambiente: R$ ${totalAmbiente.toFixed(2).replace('.', ',')}</div>
+        <div class="border p-2 text-end fw-bold bg-light">Total do Ambiente: R$ ${totalGrupo.toFixed(2).replace('.', ',')}</div>
       </div>`;
 
-    totalGeral += totalAmbiente;
+    totalGeral += totalGrupo;
   });
 
   const valorFinalComDescontoStr = document.getElementById("valorFinalTotal")?.textContent || "R$ 0,00";
@@ -108,19 +99,15 @@ function gerarOrcamentoParaImpressaoCompleta() {
   const temDescontoValido = campoDesconto && valorFinalComDesconto > 0 && valorFinalComDesconto < totalGeral;
   const descontoAplicado = temDescontoValido ? totalGeral - valorFinalComDesconto : 0;
 
-  if (temDescontoValido) {
-    corpoHTML += `
-      <div class="border p-2 text-end mt-4 bg-light">
-        <div><strong>Total Bruto:</strong> R$ ${totalGeral.toFixed(2).replace('.', ',')}</div>
-        <div><strong>Desconto Aplicado:</strong> R$ ${descontoAplicado.toFixed(2).replace('.', ',')}</div>
-        <div class="fw-bold fs-5 text-success"><strong>Total com Desconto:</strong> R$ ${valorFinalComDesconto.toFixed(2).replace('.', ',')}</div>
-      </div>`;
-  } else {
-    corpoHTML += `
-      <div class="border p-2 text-end mt-4 bg-light">
-        <div class="fw-bold">Total Geral: R$ ${totalGeral.toFixed(2).replace('.', ',')}</div>
-      </div>`;
-  }
+  corpoHTML += temDescontoValido ? `
+    <div class="border p-2 text-end mt-4 bg-light">
+      <div><strong>Total Bruto:</strong> R$ ${totalGeral.toFixed(2).replace('.', ',')}</div>
+      <div><strong>Desconto Aplicado:</strong> R$ ${descontoAplicado.toFixed(2).replace('.', ',')}</div>
+      <div class="fw-bold fs-5 text-success"><strong>Total com Desconto:</strong> R$ ${valorFinalComDesconto.toFixed(2).replace('.', ',')}</div>
+    </div>` : `
+    <div class="border p-2 text-end mt-4 bg-light">
+      <div class="fw-bold">Total Geral: R$ ${totalGeral.toFixed(2).replace('.', ',')}</div>
+    </div>`;
 
   corpoHTML += `
     <div class="border p-2 mt-3">
@@ -136,6 +123,7 @@ function gerarOrcamentoParaImpressaoCompleta() {
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
         <style>
           body { padding: 40px; font-family: Arial, sans-serif; font-size: 13px; }
+          em { color: #444; font-style: italic; }
         </style>
       </head>
       <body>
@@ -143,22 +131,20 @@ function gerarOrcamentoParaImpressaoCompleta() {
           <table class="table table-bordered table-sm w-100">
             <tr>
               <td style="width:40%;text-align:center;vertical-align:middle;">
-                <img src="logo.jpg" style="max-height:80px;"><br><br>
-                CNPJ: 00.000.000/0000-00<br>(31) 99999-9999<br>www.ferreiraulhoa.com.br
+                <img src="/js/logo.jpg" style="max-height:65px;"><br><br>
+                CNPJ: 02.836.048/0001-60 <br>(31) (31) 3332- 0616 / (31) 3271-9449<br>
               </td>
-              <td style="width:60%;">
+              <td style="width:40%;">
                 <table class="table table-sm w-100">
                   <tr><td><strong>Orçamento:</strong></td><td>${dados.numero}</td></tr>
                   <tr><td><strong>Data:</strong></td><td>${dados.data}</td></tr>
-               <tr><td colspan="2"><strong>Proposta válida por 7 dias úteis</strong></td></tr>
-
+                  <tr><td colspan="2"><strong>Proposta válida por 7 dias úteis</strong></td></tr>
                 </table>
               </td>
             </tr>
           </table>
 
           <table class="table table-bordered table-sm w-100 mt-2">
-         
             <tr><td><strong>Cliente:</strong></td><td>${dados.nomeCliente}</td></tr>
             <tr><td><strong>CPF/CNPJ:</strong></td><td>${dados.cpfCnpj}</td></tr>
             <tr><td><strong>Telefone Cliente:</strong></td><td>${dados.telefoneCliente}</td></tr>
@@ -182,9 +168,7 @@ function gerarOrcamentoParaImpressaoCompleta() {
     printWindow.document.close();
 
     printWindow.onload = async () => {
-      console.log("⏳ Aguardando carregamento completo da página...");
       await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log("✅ Página pronta. Iniciando impressão...");
       printWindow.focus();
       printWindow.print();
     };

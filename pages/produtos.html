@@ -10,24 +10,20 @@
       background-color: #f8f9fa;
       font-family: 'Segoe UI', sans-serif;
     }
-
     h2 {
       font-weight: 600;
       color: #0d6efd;
     }
-
     .accordion-button {
       font-weight: 500;
       background-color: #fff;
       color: #212529;
       border-left: 4px solid #0d6efd;
     }
-
     .accordion-button:not(.collapsed) {
       background-color: #e9f0ff;
       color: #0d6efd;
     }
-
     .accordion-item {
       margin-bottom: 10px;
       border-radius: 8px;
@@ -35,33 +31,26 @@
       border: 1px solid #dee2e6;
       box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
-
     textarea.formula {
       font-family: monospace;
       font-size: 0.9rem;
       min-height: 34px;
     }
-
     label.form-label {
       font-weight: 500;
       font-size: 0.85rem;
     }
-
-    .form-control,
-    .input-sm {
+    .form-control {
       font-size: 0.9rem;
       border-radius: 6px;
     }
-
     .valor-final {
       background-color: #e9ecef;
       font-weight: bold;
     }
-
     .variaveis-tags {
       margin-bottom: 20px;
     }
-
     .variavel-pill {
       display: inline-block;
       margin: 2px;
@@ -89,8 +78,9 @@
   </div>
   <div class="accordion" id="produtosAccordion"></div>
 
-  <div class="mt-4">
-    <button class="btn btn-primary" onclick="atualizarNaOmie()">🔄 Atualizar na Omie</button>
+  <div class="mt-4 d-flex gap-3">
+    <button class="btn btn-primary" onclick="atualizarTodosProdutos()">🔄 Atualizar todos</button>
+    <button class="btn btn-success" onclick="gerarJsonCadastro()">📄 Gerar JSON de Cadastro de Produtos</button>
   </div>
 
   <script>
@@ -103,10 +93,13 @@
       renderizarProdutos(produtosAPI);
     }
 
+    function gerarCodigoAleatorio() {
+      return Math.random().toString(36).substring(2, 8).toUpperCase();
+    }
+
     function renderizarProdutos(produtos) {
       const accordion = document.getElementById("produtosAccordion");
       accordion.innerHTML = "";
-
       variaveis.clear();
       document.getElementById("pillsVariaveis").innerHTML = "";
 
@@ -136,7 +129,7 @@
           </h2>
           <div id="${collapseId}" class="accordion-collapse collapse" data-bs-parent="#produtosAccordion">
             <div class="accordion-body">
-              <div class="row g-3 mb-2">
+              <div class="row g-3 mb-2 align-items-end">
                 <div class="col-md-6">
                   <label class="form-label">Fórmula</label>
                   <textarea class="form-control formula" data-codigo="${prod.codigo}"></textarea>
@@ -177,6 +170,53 @@
       });
     }
 
+    function atualizarTodosProdutos() {
+      const todos = [];
+      document.querySelectorAll(".accordion-item").forEach(item => {
+        const obj = calcularProduto(item);
+        if (obj) todos.push(obj);
+      });
+      console.log("📦 Todos os produtos calculados:", todos);
+    }
+
+    function calcularProduto(item) {
+      const formula = item.querySelector("textarea.formula");
+      const campoVal = item.querySelector(".valor-final");
+      const valorCalculado = parseFloat(campoVal.value) || 0;
+
+      const codigoTexto = item.querySelector(".accordion-button").textContent.trim();
+      const [codigo, ...descricaoArr] = codigoTexto.split("—");
+      const descricao = descricaoArr.join("—").trim().replace(/&quot;/g, '"');
+
+      const produtoOriginal = produtosAPI.find(p => p.codigo === codigo.trim());
+      if (!produtoOriginal) return null;
+
+      return {
+        codigo_produto_integracao: gerarCodigoAleatorio(),
+        codigo: produtoOriginal.codigo,
+        descricao: descricao,
+        unidade: produtoOriginal.unidade,
+        ncm: produtoOriginal.ncm,
+        valor_unitario: valorCalculado
+      };
+    }
+
+    function gerarJsonCadastro() {
+      const produtosCadastro = [];
+
+      document.querySelectorAll(".accordion-item").forEach(item => {
+        const produto = calcularProduto(item);
+        if (produto) produtosCadastro.push(produto);
+      });
+
+      const jsonFinal = {
+        lote: 123,
+        produto_servico_cadastro: produtosCadastro
+      };
+
+      console.log("📄 JSON de Cadastro:", jsonFinal);
+    }
+
     document.getElementById("filtroVariaveis").addEventListener("input", function () {
       const termo = this.value.toLowerCase();
       const container = document.getElementById("pillsVariaveis");
@@ -198,11 +238,6 @@
       const filtrados = produtosAPI.filter(p => `${p.codigo} ${p.descricao}`.toLowerCase().includes(termo));
       renderizarProdutos(filtrados);
     });
-
-    function atualizarNaOmie() {
-      alert("🔄 Atualizando informações na Omie...");
-      // Aqui você pode fazer um POST ou PUT para sua API Omie
-    }
 
     document.addEventListener("DOMContentLoaded", carregarProdutosDaAPI);
   </script>

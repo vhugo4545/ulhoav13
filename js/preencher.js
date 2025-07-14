@@ -25,42 +25,16 @@ function esconderLoader() {
 
 // 📥 Extrai o ID da URL (?id=...)
 function obterIdPropostaDaUrl() {
+  
   const params = new URLSearchParams(window.location.search);
   return params.get("id") || "";
 }
 
-// ✅ Preenche os campos do formulário com os dados da proposta
-async function carregarPropostaEditavel(proposta) {
-  try {
-    const campos = proposta.camposFormulario || {};
-    const setIfExists = (id, value) => {
-      const el = document.getElementById(id);
-      if (el) el.value = value ?? "";
-      else console.warn(`⚠️ Campo com ID '${id}' não encontrado.`);
-    };
 
-    setIfExists("numeroOrcamento", campos.numeroOrcamento || proposta.numeroProposta);
-    setIfExists("dataOrcamento", campos.dataOrcamento);
-    setIfExists("origemCliente", campos.origemCliente);
-    setIfExists("cep", campos.cep);
-    setIfExists("rua", campos.rua);
-    setIfExists("numero", campos.numero);
-    setIfExists("complemento", campos.complemento);
-    setIfExists("bairro", campos.bairro);
-    setIfExists("cidade", campos.cidade);
-    setIfExists("estado", campos.estado);
-    setIfExists("vendedorResponsavel", campos.vendedorResponsavel);
-    setIfExists("operadorInterno", campos.operadorInterno);
-
-    console.log("✅ Proposta preenchida com sucesso.");
-  } catch (erro) {
-    console.error("❌ Erro ao preencher proposta:", erro);
-    alert("Erro ao preencher dados da proposta.");
-  }
-}
 
 // 📦 Busca e carrega a proposta por ID
 async function localizarECarregarPropostaPorId() {
+   
   const estaEditandoModelo = window.location.pathname.includes("editarModelo.html");
 
   const idDesejado = estaEditandoModelo
@@ -75,7 +49,7 @@ async function localizarECarregarPropostaPorId() {
   }
 
   try {
-    mostrarLoader();
+   
 
     const url = `https://ulhoa-0a02024d350a.herokuapp.com/api/propostas/${idDesejado}`;
     console.log("🔍 Buscando proposta por ID:", url);
@@ -93,7 +67,6 @@ async function localizarECarregarPropostaPorId() {
       return;
     }
 
-    console.log("✅ Proposta localizada:", proposta);
 
     await esperarElemento("#clientesWrapper");
     await esperarElemento("#blocosProdutosContainer");
@@ -139,9 +112,12 @@ function arredondarCimaSeguro(valor, context = {}) {
 
 
 async function carregarPropostaEditavel(proposta) {
+
+  console.log(proposta)
+  console.log("🔍 Desconto informado:", proposta.camposFormulario.desconto);
+
   try {
     if (!proposta || typeof proposta !== "object") throw new Error("Proposta inválida.");
-console.log("propostas",proposta)
     const dados = proposta.camposFormulario || {};
     const setIfExists = (id, val) => {
       const el = document.getElementById(id);
@@ -160,12 +136,68 @@ console.log("propostas",proposta)
     setIfExists("bairro", dados.bairro);
     setIfExists("cidade", dados.cidade);
     setIfExists("estado", dados.estado);
-    setIfExists("vendedorResponsavel", dados.vendedorResponsavel);
+    
+    setTimeout(() => {
+  const vendedorEl = document.getElementById("vendedorResponsavel");
+mostrarCarregando()
+  if (vendedorEl) {
+    const options = Array.from(vendedorEl.options || []);
+    const match = options.find(opt => opt.value === dados.vendedorResponsavel || opt.text === dados.vendedorResponsavel);
+
+    if (match) {
+      vendedorEl.value = match.value;
+    } else if ("value" in vendedorEl) {
+      
+      vendedorEl.value = dados.vendedorResponsavel ?? "";
+    } else {
+       
+      vendedorEl.textContent = dados.vendedorResponsavel ?? "";
+    }
+  } else {
+    console.warn("⚠️ Campo 'vendedorResponsavel' ainda não está disponível no DOM.");
+  }
+}, 1000); // aguarda 1s para garantir que o campo foi carregado
+
+
     setIfExists("operadorInterno", dados.operadorInterno);
     setIfExists("prazosArea", dados.prazosArea);
     setIfExists("condicaoPagamento", dados.condicaoPagamento);
     setIfExists("condicoesGerais", dados.condicoesGerais);
+setTimeout(() => {
+  const campo = document.getElementById("campoDescontoFinal");
+  const campo2 = document.getElementById("vendedorResponsavel");
 
+
+if (campo) {
+  campo.value = dados.desconto ?? "";
+
+  // 🔁 Dispara evento de 'input' e 'change' para acionar listeners
+  campo.dispatchEvent(new Event("input", { bubbles: true }));
+  campo.dispatchEvent(new Event("change", { bubbles: true }));
+
+  // ✅ Chama funções específicas, se necessário
+  if (typeof calcularSomaTotal === "function") calcularSomaTotal();
+  if (typeof atualizarResumoFinanceiro === "function") atualizarResumoFinanceiro();
+  if (typeof atualizarCamposReativos === "function") atualizarCamposReativos();
+     ocultarCarregando() 
+} else {
+  console.warn("⚠️ Campo 'campoDescontoFinal' não encontrado.");
+     ocultarCarregando() 
+}
+
+if (campo2) {
+  campo2.value = dados.vendedorResponsavel ?? "";
+  console.log( campo2.value)
+} else {
+  console.warn("⚠️ Campo 'vendedorResponsavel' não encontrado.");
+}
+
+}, 4000);
+
+
+
+
+     console.log(dados.desconto)
     // 👥 Clientes
     const containerClientes = document.getElementById("clientesWrapper");
     const clienteBase = containerClientes?.querySelector(".cliente-item");
@@ -174,11 +206,13 @@ console.log("propostas",proposta)
       (dados.clientes || []).forEach((cliente, i) => {
         const ref = i === 0 ? clienteBase : clienteBase.cloneNode(true);
         ref.querySelector(".razaoSocial").value = cliente.nome_razao_social || "";
+           ref.querySelector(".razaoSocial").value = cliente.nome_razao_social || "";
         ref.querySelector(".nomeContato").value = cliente.nome_contato || "";
         ref.querySelector(".codigoCliente").value = cliente.codigoOmie || "";
         ref.querySelector(".cpfCnpj").value = cliente.cpfCnpj || "";
         ref.querySelector(".funcaoCliente").value = cliente.funcao || "";
         ref.querySelector(".telefoneCliente").value = cliente.telefone || "";
+        
         if (i > 0) containerClientes.appendChild(ref);
       });
     }
@@ -327,7 +361,7 @@ console.log("propostas",proposta)
 }
 
 
-  console.log("✅ Proposta carregada com sucesso!");
+      ocultarCarregando()
    
   } catch (erro) {
     console.error("❌ Erro ao carregar proposta:", erro);
@@ -350,78 +384,7 @@ function aguardarTabelasEExecutar(callback, delay = 2000) {
 }
 
 
-async function atualizarPrecosOmieNaDOM() {
-  const ENDPOINT = "https://ulhoa-0a02024d350a.herokuapp.com/produtos/visualizar";
 
-  const toNumber = (v) => {
-    if (v === undefined || v === null) return 0;
-    let s = String(v).replace(/\s+/g, "").replace("R$", "");
-    const hasDot = s.includes(".");
-    const hasComma = s.includes(",");
-    if (hasDot && hasComma) s = s.replace(/\./g, "").replace(",", ".");
-    else if (!hasDot && hasComma) s = s.replace(",", ".");
-    const n = parseFloat(s);
-    return isNaN(n) ? 0 : n;
-  };
-
-  try {
-    const res = await fetch(ENDPOINT);
-    if (!res.ok) throw new Error(`Erro ao buscar produtos: ${res.status}`);
-    const listaAPI = await res.json();
-
-    // Monta dicionário por código
-    const lookup = {};
-    listaAPI.forEach((p) => {
-      const codigo = String(p.codigo_produto || p.codigo || "").trim();
-      const preco = p.preco_unitario ?? p.valor_unitario ?? p.preco ?? p.price ?? 0;
-      if (codigo) lookup[codigo] = toNumber(preco);
-    });
-
-    const linhasCorrigidas = [];
-
-    document.querySelectorAll("table[id^='tabela-'] tbody tr").forEach((tr) => {
-      const codigoCell = tr.querySelector("td:nth-child(5)");
-      const custoTd = tr.querySelector("td:nth-child(3)");
-      const unitarioTd = tr.querySelector("td:nth-child(4)");
-      const inputQtd = tr.querySelector("td:nth-child(6) input");
-
-      if (!codigoCell || !unitarioTd || !custoTd || !inputQtd) return;
-
-      const codigo = String(codigoCell.textContent || "").trim();
-      const precoAPI = lookup[codigo];
-      if (!precoAPI) return;
-
-      const precoAtual = toNumber(unitarioTd?.textContent);
-      if (Math.abs(precoAtual - precoAPI) > 0.009) {
-        const qtd = parseFloat(inputQtd?.value?.replace(",", ".") || "1") || 1;
-        const novoCustoFinal = precoAPI * qtd;
-
-        unitarioTd.textContent = `R$ ${precoAPI.toFixed(2)}`;
-        custoTd.textContent = `R$ ${novoCustoFinal.toFixed(2)}`;
-
-        tr.style.backgroundColor = "#e5ffe5";
-        unitarioTd.style.color = "green";
-        custoTd.style.color = "green";
-
-        linhasCorrigidas.push(codigo);
-      }
-    });
-
-    if (typeof ativarRecalculoEmTodasTabelas === "function") {
-      ativarRecalculoEmTodasTabelas();
-    }
-
-    if (linhasCorrigidas.length > 0) {
-     mostrarPopupCustomizado("✅ Preços Atualizados", `${linhasCorrigidas.length} produto(s) com preço atualizado com sucesso.`, "success");
-
-    } else {
-      alert("✔️ Todos os preços já estavam atualizados.");
-    }
-  } catch (err) {
-    console.error("❌ Erro ao atualizar preços:", err);
-    alert("Erro ao atualizar preços com a Omie.");
-  }
-}
 
 function simularEventosInputsDosBlocos() {
   const blocos = document.querySelectorAll(".main-container");

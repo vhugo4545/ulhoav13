@@ -135,8 +135,12 @@ function adicionarClienteRelacionado() {
   // Clona o bloco .cliente-item completo
   const novo = clienteBase.cloneNode(true);
 
-  // Limpa os valores dos campos de input (inclusive nomeContato)
+  // Limpa os valores dos campos de input
   novo.querySelectorAll("input").forEach(input => input.value = "");
+
+  // Remove botão de incluir cliente (popup) se existir
+  const botaoMais = novo.querySelector("button[onclick='abrirPopupIncluirCliente()']");
+  if (botaoMais) botaoMais.remove();
 
   // Remove sugestão de autocomplete duplicada, se houver
   const sugestoesAntigas = novo.querySelector(".sugestoesCliente");
@@ -167,6 +171,7 @@ function adicionarClienteRelacionado() {
 
   console.log("➕ Cliente relacionado adicionado.");
 }
+
 
 
 // Inicializa o autocomplete no cliente principal ao carregar a página

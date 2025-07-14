@@ -1,4 +1,5 @@
 async function verificarTokenOuRedirecionar() {
+  console.log("token Valido")
   const token = localStorage.getItem("token");
 
   if (!token) {
@@ -7,7 +8,7 @@ async function verificarTokenOuRedirecionar() {
   }
 
   try {
-    const resposta = await fetch("https://ulhoa-0a02024d350a.herokuapp.com/auth/validar-token", {
+    const resposta = await fetch("https://ulhoa-0a02024d350a.herokuapp.com/api/auth/verificar-token", {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`
@@ -16,16 +17,17 @@ async function verificarTokenOuRedirecionar() {
 
     if (!resposta.ok) {
       // Token inválido ou expirado
-      localStorage.removeItem("token"); // limpa token inválido
-      window.location.href = "pages/login.html"; // redireciona
+ 
+    
       return;
     }
 
     const dados = await resposta.json();
-    console.log("🔐 Usuário autenticado:", dados.usuario);
+   
 
   } catch (erro) {
     console.error("Erro ao validar token:", erro);
-    window.location.href = "/login.html";
+    window.location.href = "/";
   }
 }
+verificarTokenOuRedirecionar()

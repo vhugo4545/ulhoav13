@@ -1,7 +1,7 @@
 ﻿/* Google Font */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
 
-/* Estilos globais */
+/* Reset e base */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -10,12 +10,13 @@
 
 body {
   font-family: 'Inter', Arial, sans-serif;
-  background: #f4f6f8;
+  background: linear-gradient(to right, #f1f3f6, #e2e8f0);
   color: #333;
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  padding: 20px;
 }
 
 /* Container centralizado */
@@ -23,52 +24,67 @@ body {
   background-color: #ffffff;
   width: 100%;
   max-width: 420px;
-  padding: 30px 25px;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  padding: 32px 28px;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* Títulos */
 h1, h2 {
   text-align: center;
   color: #222;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   font-weight: 600;
+  font-size: 1.6rem;
 }
 
 /* Campos de formulário */
-input, select {
+input,
+select {
   width: 100%;
-  padding: 12px;
-  margin-top: 14px;
+  padding: 12px 14px;
+  margin-top: 16px;
   border: 1px solid #ccc;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 1rem;
-  transition: border-color 0.2s;
+  transition: border-color 0.25s, box-shadow 0.25s;
 }
 
-input:focus, select:focus {
+input:focus,
+select:focus {
   border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
   outline: none;
 }
 
 /* Botões padrão */
 button {
   width: 100%;
-  padding: 12px;
-  margin-top: 25px;
+  padding: 14px;
+  margin-top: 28px;
   background: #007bff;
-  color: white;
+  color: #fff;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: background 0.3s ease, transform 0.1s ease;
 }
 
 button:hover {
   background: #0056b3;
+  transform: scale(1.02);
+}
+
+button:active {
+  transform: scale(0.98);
 }
 
 /* Links de troca de formulário */
@@ -78,10 +94,12 @@ button:hover {
   color: #007bff;
   cursor: pointer;
   font-size: 0.95rem;
+  transition: color 0.2s ease;
 }
 
 .toggle:hover {
   text-decoration: underline;
+  color: #0056b3;
 }
 
 /* Painel admin */
@@ -95,11 +113,22 @@ button:hover {
 
 /* Alerta */
 .alert {
-  background: #ffe5e5;
-  color: #a94442;
+  background: #ffecec;
+  color: #d8000c;
   padding: 12px;
-  margin-top: 15px;
-  border-left: 4px solid #f44336;
-  border-radius: 6px;
+  margin-top: 16px;
+  border-left: 5px solid #d8000c;
+  border-radius: 8px;
   font-size: 0.95rem;
+}
+
+/* Responsividade simples */
+@media (max-width: 480px) {
+  .container {
+    padding: 24px 20px;
+  }
+
+  h1, h2 {
+    font-size: 1.4rem;
+  }
 }

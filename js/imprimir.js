@@ -1,5 +1,4 @@
-function  gerarOrcamentoParaImpressaoCompleta()  {
- 
+function gerarOrcamentoParaImpressaoCompleta() {
   const idsObrigatorios = [
     "numeroOrcamento", "dataOrcamento", "origemCliente",
     "nomeOrigem", "telefoneOrigem", "emailOrigem",
@@ -30,7 +29,7 @@ function  gerarOrcamentoParaImpressaoCompleta()  {
 
   const dados = {
     numero: getValue("numeroOrcamento"),
-    data: getValue("dataOrcamento"),
+    data: new Date(getValue("dataOrcamento")).toLocaleDateString('pt-BR'),
     origem: getValue("origemCliente"),
     nomeOrigem: getValue("nomeOrigem"),
     codigoOrigem: getValue("codigoOrigem"),
@@ -38,8 +37,8 @@ function  gerarOrcamentoParaImpressaoCompleta()  {
     emailOrigem: getValue("emailOrigem"),
     comissao: getValue("comissaoArquiteto"),
     operador: getValue("operadorInterno"),
-    enderecoObra: getValue("enderecoObra"),
-    contatoResponsavel: getValue("contatoResponsavel"),
+    enderecoObra: `${getValue("rua")}, ${getValue("numero")}, ${getValue("bairro")} - ${getValue("complemento")} - ${getValue("cidade")}/${getValue("estado")} - CEP: ${getValue("cep")}`,
+    contatoResponsavel: document.querySelector(".telefoneCliente")?.value || "-",
     prazos: getValue("prazosArea"),
     condicao: getValue("condicaoPagamento"),
     condicoesGerais: getValue("condicoesGerais"),
@@ -103,8 +102,27 @@ function  gerarOrcamentoParaImpressaoCompleta()  {
     totalGeral += totalAmbiente;
   });
 
+  const valorFinalComDescontoStr = document.getElementById("valorFinalTotal")?.textContent || "R$ 0,00";
+  const valorFinalComDesconto = parseFloat(valorFinalComDescontoStr.replace(/[^\d,\.]/g, "").replace(",", "."));
+  const campoDesconto = document.getElementById("campoDescontoFinal")?.value?.trim();
+  const temDescontoValido = campoDesconto && valorFinalComDesconto > 0 && valorFinalComDesconto < totalGeral;
+  const descontoAplicado = temDescontoValido ? totalGeral - valorFinalComDesconto : 0;
+
+  if (temDescontoValido) {
+    corpoHTML += `
+      <div class="border p-2 text-end mt-4 bg-light">
+        <div><strong>Total Bruto:</strong> R$ ${totalGeral.toFixed(2).replace('.', ',')}</div>
+        <div><strong>Desconto Aplicado:</strong> R$ ${descontoAplicado.toFixed(2).replace('.', ',')}</div>
+        <div class="fw-bold fs-5 text-success"><strong>Total com Desconto:</strong> R$ ${valorFinalComDesconto.toFixed(2).replace('.', ',')}</div>
+      </div>`;
+  } else {
+    corpoHTML += `
+      <div class="border p-2 text-end mt-4 bg-light">
+        <div class="fw-bold">Total Geral: R$ ${totalGeral.toFixed(2).replace('.', ',')}</div>
+      </div>`;
+  }
+
   corpoHTML += `
-    <div class="border p-2 text-end fw-bold mt-4 bg-light">Total Geral: R$ ${totalGeral.toFixed(2).replace('.', ',')}</div>
     <div class="border p-2 mt-3">
       <strong>Prazo:</strong><br>${dados.prazos}<br><br>
       <strong>Condições de Pagamento:</strong><br>${dados.condicao}<br><br>
@@ -132,14 +150,15 @@ function  gerarOrcamentoParaImpressaoCompleta()  {
                 <table class="table table-sm w-100">
                   <tr><td><strong>Orçamento:</strong></td><td>${dados.numero}</td></tr>
                   <tr><td><strong>Data:</strong></td><td>${dados.data}</td></tr>
-                  <tr><td><strong>Telefone Origem:</strong></td><td>${dados.telefoneOrigem}</td></tr>
+               <tr><td colspan="2"><strong>Proposta válida por 7 dias úteis</strong></td></tr>
+
                 </table>
               </td>
             </tr>
           </table>
 
           <table class="table table-bordered table-sm w-100 mt-2">
-            <tr><td><strong>Email Origem:</strong></td><td>${dados.emailOrigem}</td></tr>
+         
             <tr><td><strong>Cliente:</strong></td><td>${dados.nomeCliente}</td></tr>
             <tr><td><strong>CPF/CNPJ:</strong></td><td>${dados.cpfCnpj}</td></tr>
             <tr><td><strong>Telefone Cliente:</strong></td><td>${dados.telefoneCliente}</td></tr>
@@ -154,22 +173,22 @@ function  gerarOrcamentoParaImpressaoCompleta()  {
       </body>
     </html>`;
 
-  const printWindow = window.open("", "_blank");
-  if (!printWindow) return;
-  printWindow.document.open();
-  printWindow.document.write(htmlCompleto);
-  printWindow.document.close();
-  printWindow.focus();
-  exemploComPausa()
-  async function exemploComPausa() {
-  console.log("⏳ Esperando 2 segundos...");
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  console.log("✅ Continuando após pausa");
+  async function abrirJanelaParaImpressao(htmlCompleto) {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    printWindow.document.open();
+    printWindow.document.write(htmlCompleto);
+    printWindow.document.close();
+
+    printWindow.onload = async () => {
+      console.log("⏳ Aguardando carregamento completo da página...");
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log("✅ Página pronta. Iniciando impressão...");
+      printWindow.focus();
+      printWindow.print();
+    };
+  }
+
+  abrirJanelaParaImpressao(htmlCompleto);
 }
-
-  printWindow.print();
- 
-}
-
-
-

@@ -1,7 +1,8 @@
 async function salvarPropostaEditavel() {
   try {
-   abrirTodasSanfonas();
-await new Promise(resolve => setTimeout(resolve, 2000));
+    abrirTodasSanfonas();
+    mostrarCarregando()
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     // 👥 Clientes
     const clientes = Array.from(document.querySelectorAll(".cliente-item")).map(el => ({
@@ -29,7 +30,8 @@ await new Promise(resolve => setTimeout(resolve, 2000));
         return { data, valor, tipo, condicao };
       });
     }
-
+const select = document.getElementById("vendedorResponsavel");
+const textoSelecionado = select?.options[select.selectedIndex]?.text || "";
     // 📋 Campos do formulário
     const camposFormulario = {
       numeroOrcamento: document.getElementById("numeroOrcamento")?.value || "",
@@ -43,7 +45,7 @@ await new Promise(resolve => setTimeout(resolve, 2000));
       bairro: document.getElementById("bairro")?.value || "",
       cidade: document.getElementById("cidade")?.value || "",
       estado: document.getElementById("estado")?.value || "",
-      vendedorResponsavel: document.getElementById("vendedorResponsavel")?.value || "",
+      vendedorResponsavel: textoSelecionado,
       operadorInterno: document.getElementById("operadorInterno")?.value || "",
       prazosArea: document.getElementById("prazosArea")?.value || "",
       condicaoPagamento,
@@ -77,6 +79,9 @@ await new Promise(resolve => setTimeout(resolve, 2000));
         const quantidade_desejada = inputQtdDesejada?.value || "";
         const formula_quantidade = inputQtdDesejada?.dataset.formula || "";
 
+        const formula_custo = tr.querySelector("td:nth-child(3)")?.dataset.formula || "";
+        const formula_preco = tr.querySelector("td:nth-child(4)")?.dataset.formula || "";
+
         itens.push({
           nome_produto,
           custo,
@@ -84,11 +89,13 @@ await new Promise(resolve => setTimeout(resolve, 2000));
           codigo_omie,
           quantidade,
           quantidade_desejada,
-          formula_quantidade
+          formula_quantidade,
+          formula_custo,
+          formula_preco
         });
       });
 
-      // 📐 Parâmetros
+      // 📐 Parâmetros dos popups (miudezas, margem, etc.)
       const parametros = {};
       bloco.querySelectorAll(".tab-pane input[name]").forEach(input => {
         const nome = input.name;
@@ -97,13 +104,34 @@ await new Promise(resolve => setTimeout(resolve, 2000));
         parametros[nome] = isNaN(valor) ? valor : parseFloat(valor);
       });
 
+      // 🔁 Campos calculados do popup (como #custoTotalMaterial, #precoMinimo)
+      const camposPopupExtras = {};
+      bloco.querySelectorAll(".tab-pane .campo-resultado").forEach(el => {
+        const nome = el.id?.replace("campo-", "") || "";
+        if (!nome) return;
+        const valor = el.textContent?.replace("R$", "").replace(",", ".").trim();
+        camposPopupExtras[nome] = parseFloat(valor) || 0;
+      });
+
+      // 🔒 Dados do popup salvos em groupPopupsData
+      const dadosPopupSalvos = window.groupPopupsData?.[blocoId] || {};
+
       if (itens.length > 0) {
-        grupos.push({ nome: nomeGrupo, ambiente, itens, parametros });
+        grupos.push({
+          nome: nomeGrupo,
+          ambiente,
+          itens,
+          parametros,
+          camposPopupExtras,
+          dadosPopupSalvos
+        });
       }
     });
 
     if (!grupos.length) {
-      console.warn("⚠️ Nenhum grupo ou item para salvar.");
+       ocultarCarregando()
+     mostrarPopupCustomizado("⚠️ Atenção", "Nenhum grupo ou item foi adicionado à proposta.", "warning");
+     
       return { erro: "Nenhum produto informado." };
     }
 
@@ -125,22 +153,27 @@ await new Promise(resolve => setTimeout(resolve, 2000));
 
     const resultado = await resposta.json();
     console.log("📦 Proposta salva com sucesso:", resultado);
-     mostrarPopupCustomizado("✅ Sucesso", "Proposta atualizada com sucesso!", "success");
+     ocultarCarregando()
+    mostrarPopupCustomizado("✅ Sucesso", "Proposta atualizada com sucesso!", "success");
+  
     return resultado;
 
   } catch (erro) {
     console.error("❌ Erro ao salvar proposta:", erro);
-   mostrarPopupCustomizado("❌ Erro", "Erro ao atualizar proposta. Verifique o console.", "error");
-
+     ocultarCarregando()
+    mostrarPopupCustomizado("❌ Erro", "Erro ao atualizar proposta. Verifique o console.", "error");
     return { erro: "Erro inesperado ao salvar proposta." };
   }
 }
 
 
+
+
 async function atualizarPropostaEditavel() {
   try {
-   abrirTodasSanfonas();
-await new Promise(resolve => setTimeout(resolve, 2000));
+    abrirTodasSanfonas();
+    mostrarCarregando();
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     const idProposta = new URLSearchParams(window.location.search).get("id");
     if (!idProposta) {
@@ -148,32 +181,39 @@ await new Promise(resolve => setTimeout(resolve, 2000));
       return { erro: "ID da proposta não encontrado." };
     }
 
+    // 👤 Vendedor Responsável
+    const select = document.getElementById("vendedorResponsavel");
+    const textoSelecionado = select?.options[select.selectedIndex]?.text?.trim() || "";
+
     // 👥 Clientes
-    const clientes = Array.from(document.querySelectorAll(".cliente-item")).map(el => ({
-      nome_razao_social: el.querySelector(".razaoSocial")?.value || "",
-      nome_contato: el.querySelector(".nomeContato")?.value || "",
-      codigoOmie: el.querySelector(".codigoCliente")?.value || "",
-      cpfCnpj: el.querySelector(".cpfCnpj")?.value || "",
-      funcao: el.querySelector(".funcaoCliente")?.value || "",
-      telefone: el.querySelector(".telefoneCliente")?.value || ""
-    }));
+ const clientes = Array.from(document.querySelectorAll(".cliente-item")).map(el => ({
+  nome_razao_social: el.querySelector(".razaoSocial")?.value || "",
+  nome_contato: el.querySelector(".nomeContato")?.value || "",
+  codigoOmie: el.querySelector(".codigoCliente")?.value || "",
+  cpfCnpj: el.querySelector(".cpfCnpj")?.value || "",
+  funcao: el.querySelector(".funcaoCliente")?.value || "",
+  telefone: el.querySelector(".telefoneCliente")?.value || ""
+}));
 
-    // 💳 Condição e parcelas
-    const condicaoPagamento = document.getElementById("condicaoPagamento")?.value || "";
-    let parcelas = [];
 
-    if (condicaoPagamento === "parcelado") {
-      const linhas = document.querySelectorAll("#listaParcelas .row");
-      parcelas = Array.from(linhas).map(row => {
-        const data = row.querySelector(".data-parcela")?.value || "";
-        const valor = row.querySelector(".valor-parcela")?.value || "";
-        const tipo = row.querySelector(".tipo-monetario")?.value || "";
-        const condSelect = row.querySelector("select.condicao-pagto");
-        const condInput = row.querySelector("input.condicao-pagto");
-        const condicao = condSelect?.value || condInput?.value || "";
-        return { data, valor, tipo, condicao };
-      });
-    }
+    // 💳 Condição de pagamento
+    const condicaoPagamento = document.getElementById("condicaoPagamento")?.value?.trim() || "";
+
+    // 💸 Captura das parcelas sempre, sem if
+    const linhas = document.querySelectorAll("#listaParcelas .row");
+    const parcelas = Array.from(linhas).map(row => {
+      const tipo = row.querySelector(".tipo-monetario")?.value || "";
+      const condicao = row.querySelector(".condicao-pagto")?.value || "";
+      const valor = row.querySelector(".valor-parcela")?.value || "";
+      const data = row.querySelector(".data-parcela")?.value || "";
+      return { tipo, condicao, valor, data };
+    });
+
+    console.log("📦 Parcelas captadas:", parcelas);
+
+    // 💲 Desconto
+    const desconto = document.querySelector("#campoDescontoFinal")?.value || "";
+    console.log("🔍 Desconto informado:", desconto);
 
     // 📋 Campos do formulário
     const camposFormulario = {
@@ -188,11 +228,12 @@ await new Promise(resolve => setTimeout(resolve, 2000));
       bairro: document.getElementById("bairro")?.value || "",
       cidade: document.getElementById("cidade")?.value || "",
       estado: document.getElementById("estado")?.value || "",
-      vendedorResponsavel: document.getElementById("vendedorResponsavel")?.value || "",
+      vendedorResponsavel: textoSelecionado,
       operadorInterno: document.getElementById("operadorInterno")?.value || "",
       prazosArea: document.getElementById("prazosArea")?.value || "",
       condicaoPagamento,
       condicoesGerais: document.getElementById("condicoesGerais")?.value || "",
+      desconto,
       parcelas
     };
 
@@ -221,6 +262,8 @@ await new Promise(resolve => setTimeout(resolve, 2000));
         const inputQtdDesejada = tr.querySelector("input.quantidade-desejada");
         const quantidade_desejada = inputQtdDesejada?.value || "";
         const formula_quantidade = inputQtdDesejada?.dataset.formula || "";
+        const formula_custo = tr.querySelector("td:nth-child(3)")?.dataset.formula || "";
+        const formula_preco = tr.querySelector("td:nth-child(4)")?.dataset.formula || "";
 
         itens.push({
           nome_produto,
@@ -229,11 +272,12 @@ await new Promise(resolve => setTimeout(resolve, 2000));
           codigo_omie,
           quantidade,
           quantidade_desejada,
-          formula_quantidade
+          formula_quantidade,
+          formula_custo,
+          formula_preco
         });
       });
 
-      // 📐 Parâmetros do grupo
       const parametros = {};
       bloco.querySelectorAll(".tab-pane input[name]").forEach(input => {
         const nome = input.name;
@@ -242,17 +286,33 @@ await new Promise(resolve => setTimeout(resolve, 2000));
         parametros[nome] = isNaN(valor) ? valor : parseFloat(valor);
       });
 
+      const camposPopupExtras = {};
+      bloco.querySelectorAll(".tab-pane .campo-resultado").forEach(el => {
+        const nome = el.id?.replace("campo-", "") || "";
+        const valor = el.textContent?.replace("R$", "").replace(",", ".").trim();
+        camposPopupExtras[nome] = parseFloat(valor) || 0;
+      });
+
+      const dadosPopupSalvos = window.groupPopupsData?.[blocoId] || {};
+
       if (itens.length > 0) {
-        grupos.push({ nome: nomeGrupo, ambiente, itens, parametros });
+        grupos.push({
+          nome: nomeGrupo,
+          ambiente,
+          itens,
+          parametros,
+          camposPopupExtras,
+          dadosPopupSalvos
+        });
       }
     });
 
     if (!grupos.length) {
-      console.warn("⚠️ Nenhum grupo ou item para atualizar.");
+      ocultarCarregando();
+      mostrarPopupCustomizado("⚠️ Atenção", "Nenhum grupo ou item foi adicionado à proposta.", "warning");
       return { erro: "Nenhum produto informado." };
     }
 
-    // 🔄 Objeto de proposta atualizado
     const numeroProposta = camposFormulario.numeroOrcamento || Date.now().toString();
     const propostaAtualizada = {
       tipoProposta: "editavel",
@@ -261,37 +321,38 @@ await new Promise(resolve => setTimeout(resolve, 2000));
       grupos
     };
 
-    // 🚀 Envia para o backend com PUT
     const resposta = await fetch(`https://ulhoa-0a02024d350a.herokuapp.com/api/propostas/${idProposta}`, {
       method: "PUT",
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(propostaAtualizada)
     });
 
     const resultado = await resposta.json();
     console.log("✅ Proposta atualizada com sucesso:", resultado);
+    ocultarCarregando();
     mostrarPopupCustomizado("✅ Sucesso", "Proposta atualizada com sucesso!", "success");
-  
+     ocultarCarregando() 
     return resultado;
 
   } catch (erro) {
     console.error("❌ Erro ao atualizar proposta:", erro);
+    ocultarCarregando();
     mostrarPopupCustomizado("❌ Erro", "Erro ao atualizar proposta. Verifique o console.", "error");
-
+    ocultarCarregando() 
     return { erro: erro.message };
   }
 }
 
+
+
 async function atualizarPropostaModelo() {
   try {
-   abrirTodasSanfonas();
-await new Promise(resolve => setTimeout(resolve, 2000));
+    abrirTodasSanfonas();
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
-    const idProposta = "6851c413b30e3e4dda354132"
+    const idProposta = "6851c413b30e3e4dda354132";
     if (!idProposta) {
-      alert("❌ ID da proposta não encontrado na URL.");
+      alert("❌ ID da proposta não encontrado.");
       return { erro: "ID da proposta não encontrado." };
     }
 
@@ -322,26 +383,29 @@ await new Promise(resolve => setTimeout(resolve, 2000));
       });
     }
 
-    // 📋 Campos do formulário
-    const camposFormulario = {
-      numeroOrcamento: document.getElementById("numeroOrcamento")?.value || "",
-      dataOrcamento: document.getElementById("dataOrcamento")?.value || "",
-      origemCliente: document.getElementById("origemCliente")?.value || "",
-      clientes,
-      cep: document.getElementById("cep")?.value || "",
-      rua: document.getElementById("rua")?.value || "",
-      numero: document.getElementById("numero")?.value || "",
-      complemento: document.getElementById("complemento")?.value || "",
-      bairro: document.getElementById("bairro")?.value || "",
-      cidade: document.getElementById("cidade")?.value || "",
-      estado: document.getElementById("estado")?.value || "",
-      vendedorResponsavel: document.getElementById("vendedorResponsavel")?.value || "",
-      operadorInterno: document.getElementById("operadorInterno")?.value || "",
-      prazosArea: document.getElementById("prazosArea")?.value || "",
-      condicaoPagamento,
-      condicoesGerais: document.getElementById("condicoesGerais")?.value || "",
-      parcelas
-    };
+   const desconto = document.querySelector("#campoDescontoFinal")?.value || "";
+console.log("🔍 Desconto informado:", desconto);
+
+const camposFormulario = {
+  numeroOrcamento: document.getElementById("numeroOrcamento")?.value || "",
+  dataOrcamento: document.getElementById("dataOrcamento")?.value || "",
+  origemCliente: document.getElementById("origemCliente")?.value || "",
+  clientes,
+  cep: document.getElementById("cep")?.value || "",
+  rua: document.getElementById("rua")?.value || "",
+  numero: document.getElementById("numero")?.value || "",
+  complemento: document.getElementById("complemento")?.value || "",
+  bairro: document.getElementById("bairro")?.value || "",
+  cidade: document.getElementById("cidade")?.value || "",
+  estado: document.getElementById("estado")?.value || "",
+  vendedorResponsavel: document.getElementById("vendedorResponsavel")?.value || "",
+  operadorInterno: document.getElementById("operadorInterno")?.value || "",
+  prazosArea: document.getElementById("prazosArea")?.value || "",
+  condicaoPagamento,
+  condicoesGerais: document.getElementById("condicoesGerais")?.value || "",
+  desconto,
+  parcelas,
+};
 
     // 🔄 Grupos e produtos
     const grupos = [];
@@ -368,6 +432,8 @@ await new Promise(resolve => setTimeout(resolve, 2000));
         const inputQtdDesejada = tr.querySelector("input.quantidade-desejada");
         const quantidade_desejada = inputQtdDesejada?.value || "";
         const formula_quantidade = inputQtdDesejada?.dataset.formula || "";
+        const formula_custo = tr.querySelector("td:nth-child(3)")?.dataset.formula || "";
+        const formula_preco = tr.querySelector("td:nth-child(4)")?.dataset.formula || "";
 
         itens.push({
           nome_produto,
@@ -376,7 +442,9 @@ await new Promise(resolve => setTimeout(resolve, 2000));
           codigo_omie,
           quantidade,
           quantidade_desejada,
-          formula_quantidade
+          formula_quantidade,
+          formula_custo,
+          formula_preco
         });
       });
 
@@ -389,8 +457,26 @@ await new Promise(resolve => setTimeout(resolve, 2000));
         parametros[nome] = isNaN(valor) ? valor : parseFloat(valor);
       });
 
+      // 🧮 Campos extras do popup (ex: #custoTotalMaterial, #precoMinimo)
+      const camposPopupExtras = {};
+      bloco.querySelectorAll(".tab-pane .campo-resultado").forEach(el => {
+        const nome = el.id?.replace("campo-", "") || "";
+        const valor = el.textContent?.replace("R$", "").replace(",", ".").trim();
+        camposPopupExtras[nome] = parseFloat(valor) || 0;
+      });
+
+      // 💾 Dados salvos do popup (groupPopupsData)
+      const dadosPopupSalvos = window.groupPopupsData?.[blocoId] || {};
+
       if (itens.length > 0) {
-        grupos.push({ nome: nomeGrupo, ambiente, itens, parametros });
+        grupos.push({
+          nome: nomeGrupo,
+          ambiente,
+          itens,
+          parametros,
+          camposPopupExtras,
+          dadosPopupSalvos
+        });
       }
     });
 
@@ -399,7 +485,7 @@ await new Promise(resolve => setTimeout(resolve, 2000));
       return { erro: "Nenhum produto informado." };
     }
 
-    // 🔄 Objeto de proposta atualizado
+    // 🧾 Proposta final
     const numeroProposta = camposFormulario.numeroOrcamento || Date.now().toString();
     const propostaAtualizada = {
       tipoProposta: "editavel",
@@ -408,19 +494,20 @@ await new Promise(resolve => setTimeout(resolve, 2000));
       grupos
     };
 
+    console.log("📦 Proposta que será enviada:", propostaAtualizada);
+console.log("🔍 Desconto informado:", propostaAtualizada.camposFormulario.desconto);
+
     // 🚀 Envia para o backend com PUT
     const resposta = await fetch(`https://ulhoa-0a02024d350a.herokuapp.com/api/propostas/${idProposta}`, {
       method: "PUT",
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(propostaAtualizada)
     });
 
     const resultado = await resposta.json();
     console.log("✅ Proposta atualizada com sucesso:", resultado);
-     mostrarPopupCustomizado("✅ Sucesso", "Proposta atualizada com sucesso!", "success");
-    marcarPendenteAprovacao()
+    mostrarPopupCustomizado("✅ Sucesso", "Proposta atualizada com sucesso!", "success");
+    marcarPendenteAprovacao();
     return resultado;
 
   } catch (erro) {
@@ -433,6 +520,7 @@ await new Promise(resolve => setTimeout(resolve, 2000));
 
 
 
+
 function getIdDaURL() {
   const params = new URLSearchParams(window.location.search);
   return params.get("id");
@@ -440,41 +528,52 @@ function getIdDaURL() {
 
 // 1️⃣ Orçamento Iniciado
 async function marcarOrcamentoIniciado() {
+  mostrarCarregando()
   await atualizarStatus("Orçamento Iniciado");
+  ocultarCarregando() 
 }
 
 // 2️⃣ Pendente de aprovação
 async function marcarPendenteAprovacao() {
+  mostrarCarregando()
   await atualizarStatus("Pendente de aprovação");
+  ocultarCarregando() 
 }
 
 // 3️⃣ Aprovado Pelo Gestor
 async function marcarAprovadoPeloGestor() {
-  await marcarPrecosDivergentesOmie()
+    mostrarCarregando()
+   await marcarPrecosDivergentesOmie()
   
   await atualizarStatus("Aprovado Pelo Gestor");
- 
+ ocultarCarregando() 
 }
 
 // 4️⃣ Enviado Para o Cliente
 async function marcarEnviadoParaCliente() {
+  mostrarCarregando()
   await atualizarStatus("Enviado Para o Cliente");
-   gerarOrcamentoParaImpressaoCompleta() 
+  gerarOrcamentoParaImpressaoCompleta() 
+  ocultarCarregando() 
  
 }
 
 
 // 5️⃣ Orçamento Aprovado pelo Cliente
 async function marcarAprovadoPeloCliente() {
+  mostrarCarregando()
   await atualizarStatus("Orçamento Aprovado pelo Cliente");
+  ocultarCarregando() 
 }
 
 // 6️⃣ Pedido Enviado para a Omie
 async function marcarPedidoEnviadoParaOmie() {
+  mostrarCarregando()
   await atualizarStatus("Pedido Enviado para a Omie");
+  ocultarCarregando() 
 }
 
-// 🔁 Função base reutilizável
+
 // 🔁 Função base reutilizável
 async function atualizarStatus(novoStatus) {
   try {
@@ -697,7 +796,8 @@ async function marcarPrecosDivergentesOmie() {
     });
 
     if (linhasDivergentes.length === 0) {
-      alert("✅ Todos os preços estão atualizados.");
+     mostrarPopupCustomizado("✅ Preços Atualizados", "Todos os preços estão atualizados com sucesso.", "success");
+
       return;
     }
 
@@ -706,7 +806,8 @@ async function marcarPrecosDivergentesOmie() {
       podeAtualizarValores = !!tokenOuFalse;
     } else {
       podeAtualizarValores = false;
-      alert("⚠️ Há preços divergentes. Linhas foram destacadas.");
+      mostrarPopupCustomizado("⚠️ Preços Divergentes", "Há preços divergentes. As linhas afetadas foram destacadas para revisão.", "warning");
+
     }
 
     linhasDivergentes.forEach(({ tr, precoAPI, precoAtual, inputQtd, custoTd, unitarioTd, codigo }) => {

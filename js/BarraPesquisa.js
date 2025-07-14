@@ -183,6 +183,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 window.blocoIndex ??= 1;
 
+// 💾 Cache global dos produtos da Omie
+window._produtosOmieCache = null;
+
 async function atualizarPrecosOmieNaDOM() {
   const ENDPOINT = "https://ulhoa-0a02024d350a.herokuapp.com/produtos/visualizar";
 
@@ -198,9 +201,15 @@ async function atualizarPrecosOmieNaDOM() {
   };
 
   try {
-    const res = await fetch(ENDPOINT);
-    if (!res.ok) throw new Error(`Erro ao buscar produtos: ${res.status}`);
-    const listaAPI = await res.json();
+    // ⚡ Usa cache se já estiver carregado
+    if (!window._produtosOmieCache) {
+      const res = await fetch(ENDPOINT);
+      if (!res.ok) throw new Error(`Erro ao buscar produtos: ${res.status}`);
+      const listaAPI = await res.json();
+      window._produtosOmieCache = listaAPI;
+    }
+
+    const listaAPI = window._produtosOmieCache;
 
     // Monta dicionário por código
     const lookup = {};
@@ -240,23 +249,41 @@ async function atualizarPrecosOmieNaDOM() {
       }
     });
 
+    // ⏳ Aguarda DOM se estabilizar antes de reativar sanfonas
+    setTimeout(() => {
+      document.querySelectorAll(".accordion-collapse").forEach(el => {
+        const instance = bootstrap.Collapse.getOrCreateInstance(el);
+        if (!el.classList.contains("show")) {
+          instance.hide();
+        } else {
+          instance.show();
+        }
+      });
+    }, 500); // ⏱️ Ajuste o tempo se necessário
+
+    // Recalcula totais
     if (typeof ativarRecalculoEmTodasTabelas === "function") {
       ativarRecalculoEmTodasTabelas();
     }
 
-    if (linhasCorrigidas.length > 0) {
- mostrarPopupCustomizado("✅ Preços Atualizados", `${linhasCorrigidas.length} produto(s) com preço atualizado com sucesso.`, "success");
+    const mensagem = `${linhasCorrigidas.length} produto(s) com preço atualizado com sucesso.`;
 
-       document.querySelectorAll('input[name="descricao"]').forEach(forcarEventosDescricao);
-    } else {
-      alert("✔️ Todos os preços já estavam atualizados.");
-     
+    if (!window.location.pathname.includes("criar.html")) {
+      if (linhasCorrigidas.length > 0) {
+        mostrarPopupCustomizado("✅ Preços Atualizados", mensagem, "success");
+        
+        mostrarPopupCustomizado("⚠️ Ajustes Realizados", "Os preços foram atualizados com a Omie. Por conta disso, os campos de desconto e parcelas foram resetados para garantir consistência nos valores.", "warning");
 
+      } else {
+        alert("✔️ Todos os preços já estavam atualizados.");
+      }
     }
 
   } catch (err) {
     console.error("❌ Erro ao atualizar preços:", err);
-    alert("Erro ao atualizar preços com a Omie.");
+    if (!window.location.pathname.includes("criar.html")) {
+      alert("Erro ao atualizar preços com a Omie.");
+    }
   }
 }
 

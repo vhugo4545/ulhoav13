@@ -3,37 +3,50 @@
 <head>
   <meta charset="UTF-8">
   <title>Produtos e Fórmulas</title>
+
+  <!-- Google Font: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
   <style>
+    /* Reset e Fonte */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
-      padding: 40px;
-      background-color: #f8f9fa;
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(to right, #f1f3f6, #e2e8f0);
+      color: #202020;
+      padding: 40px 20px;
     }
 
     h2 {
       font-weight: 600;
-      color: #0d6efd;
+      color: #1d1d1d;
+      text-align: center;
+      margin-bottom: 30px;
     }
 
     .accordion-button {
       font-weight: 500;
       background-color: #fff;
       color: #212529;
-      border-left: 4px solid #0d6efd;
+      border-left: 4px solid #272727;
     }
 
     .accordion-button:not(.collapsed) {
       background-color: #e9f0ff;
-      color: #0d6efd;
+      color: #353535;
     }
 
     .accordion-item {
-      margin-bottom: 10px;
-      border-radius: 8px;
-      overflow: hidden;
+      margin-bottom: 12px;
+      border-radius: 10px;
       border: 1px solid #dee2e6;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.06);
     }
 
     textarea.formula {
@@ -44,103 +57,175 @@
 
     label.form-label {
       font-weight: 500;
-      font-size: 0.85rem;
+      font-size: 0.88rem;
     }
 
     .form-control,
     .input-sm {
-      font-size: 0.9rem;
-      border-radius: 6px;
+      font-size: 0.95rem;
+      border-radius: 8px;
     }
 
     .quantidade-desejada {
-      background-color: #e9ecef;
+      background-color: #f1f3f6;
       font-weight: bold;
     }
 
     #variaveisContainer {
       background: #ffffff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-      border-left: 5px solid #0d6efd;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+      border-left: 5px solid #272727;
     }
 
     #variaveisContainer h5 {
-      color: #0d6efd;
+      color: #414141;
       font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    #loader {
+      display: none;
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    button.btn-success {
+      display: block;
+      margin: 0 auto 30px auto;
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 10px;
+    }
+
+    #filtroGrupo {
+      max-width: 400px;
+      margin: 0 auto 30px auto;
+    }
+
+    .container-proposta {
+      max-width: 960px;
+      margin: 0 auto;
     }
   </style>
 </head>
 <body>
-  <h2 class="mb-4">📦 Produtos e Fórmulas</h2>
+  <div class="container-proposta">
+    <h2> Produtos e Fórmulas</h2>
 
-  <div id="variaveisContainer" class="mb-4">
-    <h5>🔧 Variáveis</h5>
-    <div class="row g-3" id="listaVariaveis"></div>
+    <button class="btn btn-success" onclick="atualizarFormulasNaProposta()"> Atualizar Fórmulas</button>
+
+    <input id="filtroGrupo" type="text" class="form-control" placeholder="🔍 Buscar grupo por nome...">
+
+    <div id="loader">
+      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Carregando...</span>
+      </div>
+      <p class="mt-2 text-primary fw-semibold">Carregando produtos...</p>
+    </div>
+
+    <div id="variaveisContainer" class="mb-4" style="display: none;">
+      <h5>🔧 Variáveis</h5>
+      <div class="row g-3" id="listaVariaveis"></div>
+    </div>
+
+    <div class="accordion" id="produtosAccordion"></div>
   </div>
-
-  <div class="accordion" id="produtosAccordion"></div>
-
-  <!-- JS permanece o mesmo -->
   <script>
-    const ID_PROPOSTA = "6851c413b30e3e4dda354132";
+    const ID_PROPOSTA = "68746e305b9691a7ed3b3f97";
     const variaveis = new Map();
     let todasFormulas = [];
 
-    async function carregarProposta() {
-      const resp = await fetch("https://ulhoa-0a02024d350a.herokuapp.com/api/propostas");
-      const propostas = await resp.json();
-      const proposta = propostas.find(p => p._id === ID_PROPOSTA);
-      if (!proposta) throw new Error("Proposta não encontrada");
+ async function carregarProposta() {
+  const loader = document.getElementById("loader");
+  const variaveisBox = document.getElementById("variaveisContainer");
+  loader.style.display = "block";
+  variaveisBox.style.display = "none";
 
-      todasFormulas = [];
-      const accordion = document.getElementById("produtosAccordion");
-      accordion.innerHTML = "";
+  try {
+    const resp = await fetch(`https://ulhoa-0a02024d350a.herokuapp.com/api/propostas/${ID_PROPOSTA}`);
+    if (!resp.ok) throw new Error("Proposta não encontrada");
+    const proposta = await resp.json();
 
-      let produtoIndex = 0;
+    propostaOriginal = proposta; // ✅ Salva a proposta completa globalmente
 
-      proposta.grupos.forEach((grupo, gIndex) => {
-        grupo.itens.forEach((item, pIndex) => {
-          const formula = item.formula_quantidade || "";
-          todasFormulas.push(formula);
+    todasFormulas = [];
+    const accordion = document.getElementById("produtosAccordion");
+    accordion.innerHTML = "";
 
-          const id = `produto-${gIndex}-${pIndex}`;
-          const headerId = `${id}-header`;
-          const collapseId = `${id}-body`;
+    proposta.grupos.forEach((grupo, gIndex) => {
+      const grupoId = `grupo-${gIndex}`;
+      const grupoHeaderId = `${grupoId}-header`;
+      const grupoCollapseId = `${grupoId}-body`;
 
-          const card = document.createElement("div");
-          card.className = "accordion-item";
+      const grupoWrapper = document.createElement("div");
+      grupoWrapper.className = "accordion-item";
 
-          card.innerHTML = `
-            <h2 class="accordion-header" id="${headerId}">
-              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}">
-                ${grupo.nome} — ${item.nome_produto}
-              </button>
-            </h2>
-            <div id="${collapseId}" class="accordion-collapse collapse" data-bs-parent="#produtosAccordion">
-              <div class="accordion-body">
-                <div class="row g-3 mb-2">
-                  <div class="col-md-6">
-                    <label class="form-label">Fórmula</label>
-                    <textarea class="form-control formula" data-index="${produtoIndex}">${formula}</textarea>
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">Quantidade Desejada</label>
-                    <input type="number" class="form-control quantidade-desejada" readonly />
-                  </div>
+      grupoWrapper.innerHTML = `
+        <h2 class="accordion-header" id="${grupoHeaderId}">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#${grupoCollapseId}">
+            ${grupo.nome}
+          </button>
+        </h2>
+        <div id="${grupoCollapseId}" class="accordion-collapse collapse" data-bs-parent="#produtosAccordion">
+          <div class="accordion-body">
+            <div class="accordion" id="accordion-produtos-${grupoId}"></div>
+          </div>
+        </div>
+      `;
+      accordion.appendChild(grupoWrapper);
+
+      const produtosContainer = grupoWrapper.querySelector(`#accordion-produtos-${grupoId}`);
+
+      grupo.itens.forEach((item, pIndex) => {
+        const formula = item.formula_quantidade || "";
+        todasFormulas.push(formula);
+
+        const id = `${grupoId}-produto-${pIndex}`;
+        const headerId = `${id}-header`;
+        const collapseId = `${id}-body`;
+
+        const card = document.createElement("div");
+        card.className = "accordion-item";
+
+        card.innerHTML = `
+          <h2 class="accordion-header" id="${headerId}">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}">
+              ${item.nome_produto}
+            </button>
+          </h2>
+          <div id="${collapseId}" class="accordion-collapse collapse" data-bs-parent="#accordion-produtos-${grupoId}">
+            <div class="accordion-body">
+              <div class="row g-3 mb-2">
+                <div class="col-md-6">
+                  <label class="form-label">Fórmula</label>
+                  <textarea class="form-control formula">${formula}</textarea>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Quantidade Desejada</label>
+                  <input type="number" class="form-control quantidade-desejada" readonly />
                 </div>
               </div>
             </div>
-          `;
-          accordion.appendChild(card);
-          produtoIndex++;
-        });
+          </div>
+        `;
+        produtosContainer.appendChild(card);
       });
+    });
 
-      listarVariaveis();
-      avaliarTodasFormulas();
-    }
+    listarVariaveis();
+    ativarRecalculoAoSairDasFormulas();
+    avaliarTodasFormulas();
+    configurarFiltroDeGrupos();
+
+    loader.style.display = "none";
+    variaveisBox.style.display = "block";
+  } catch (err) {
+    loader.innerHTML = `<p class="text-danger">Erro ao carregar proposta: ${err.message}</p>`;
+  }
+}
 
     function listarVariaveis() {
       const todas = todasFormulas.join(" ");
@@ -160,10 +245,20 @@
       });
 
       lista.querySelectorAll("input").forEach(input => {
-        input.addEventListener("input", () => {
-          const nome = input.dataset.var;
-          const valor = parseFloat(input.value);
-          variaveis.set(nome, isNaN(valor) ? null : valor);
+        ["input", "blur"].forEach(evento => {
+          input.addEventListener(evento, () => {
+            const nome = input.dataset.var;
+            const valor = parseFloat(input.value);
+            variaveis.set(nome, isNaN(valor) ? null : valor);
+            avaliarTodasFormulas();
+          });
+        });
+      });
+    }
+
+    function ativarRecalculoAoSairDasFormulas() {
+      document.querySelectorAll("textarea.formula").forEach(textarea => {
+        textarea.addEventListener("blur", () => {
           avaliarTodasFormulas();
         });
       });
@@ -189,11 +284,93 @@
 
         campoQtd.value = resultado;
       });
+
+      console.log("🔁 Fórmulas reavaliadas:", Object.fromEntries(variaveis));
+    }
+
+    function configurarFiltroDeGrupos() {
+      const inputFiltro = document.getElementById("filtroGrupo");
+      inputFiltro.addEventListener("input", () => {
+        const termo = inputFiltro.value.toLowerCase().trim();
+        const grupos = document.querySelectorAll("#produtosAccordion > .accordion-item");
+
+        grupos.forEach(grupo => {
+          const titulo = grupo.querySelector(".accordion-button")?.textContent?.toLowerCase() || "";
+          grupo.style.display = titulo.includes(termo) ? "" : "none";
+        });
+      });
     }
 
     document.addEventListener("DOMContentLoaded", carregarProposta);
-  </script>
+
+
+ async function atualizarFormulasNaProposta() {
+  try {
+    mostrarCarregando();
+
+    const idProposta = ID_PROPOSTA; // constante fixa
+
+    if (!propostaOriginal) {
+      throw new Error("Proposta original não carregada.");
+    }
+
+    // Clonar estrutura da proposta completa
+    const novaProposta = JSON.parse(JSON.stringify(propostaOriginal));
+
+    // Atualizar apenas as fórmulas e quantidades dentro dos grupos
+    novaProposta.grupos.forEach((grupo, gIndex) => {
+      const grupoId = `grupo-${gIndex}`;
+      const produtos = document.querySelectorAll(`#accordion-produtos-${grupoId} .accordion-item`);
+
+      produtos.forEach((produtoCard, pIndex) => {
+        const formulaTextarea = produtoCard.querySelector("textarea.formula");
+        const formula = formulaTextarea?.value?.trim() || "";
+
+        let quantidade_desejada = null;
+        try {
+          const expr = formula.replace(/#[a-zA-Z0-9_]+/g, match => {
+            const inputVar = document.querySelector(`[data-var="${match}"]`);
+            if (!inputVar) throw `Variável ${match} não encontrada`;
+            const valor = parseFloat(inputVar.value);
+            if (isNaN(valor)) throw `Valor inválido para ${match}`;
+            return valor;
+          });
+          const val = eval(expr);
+          quantidade_desejada = isNaN(val) ? null : parseFloat(val.toFixed(2));
+        } catch {
+          quantidade_desejada = null;
+        }
+
+        // Atualiza apenas os campos desejados no item correspondente
+        const item = grupo.itens[pIndex];
+        if (item) {
+          item.formula_quantidade = formula;
+          item.quantidade_desejada = quantidade_desejada;
+        }
+      });
+    });
+
+    const resp = await fetch(`https://ulhoa-0a02024d350a.herokuapp.com/api/propostas/${idProposta}`, {
+      method: "PUT",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(novaProposta)
+    });
+
+    const result = await resp.json();
+    console.log("✅ Apenas fórmulas atualizadas:", result);
+
+    mostrarPopupCustomizado("✅ Fórmulas Atualizadas", "As fórmulas foram salvas com sucesso.", "success");
+  } catch (err) {
+    console.error("❌ Erro ao salvar fórmulas:", err);
+    mostrarPopupCustomizado("❌ Erro", "Erro ao salvar fórmulas.", "error");
+  } finally {
+    ocultarCarregando();
+  }
+}
+ </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../js/carregamento.js"></script>
+    <script src="../js/envioOmie.js"></script>
 </body>
 </html>

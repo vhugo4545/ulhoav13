@@ -56,6 +56,9 @@ function incluirProduto(idSuffix) {
 }
 function removerBloco(id) {
   const confirmar = confirm("Tem certeza que deseja excluir este grupo?");
+  setTimeout(() => {
+    adicionarTotalizadoresPorAmbienteComAgrupamento();
+  }, 100); // ou 100m
   if (!confirmar) return;
 
   const bloco = document.getElementById(id);

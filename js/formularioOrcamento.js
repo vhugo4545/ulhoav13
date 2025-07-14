@@ -1,32 +1,44 @@
 // formularioOrcamento.js
 
 async function carregarVendedores() {
-  const select = document.getElementById("vendedorResponsavel");
-  if (!select) {
-    console.warn("❌ Select #vendedorResponsavel não encontrado.");
-    return;
-  }
+  const TOKEN = localStorage.getItem('accessToken');
 
   try {
-    const resposta = await fetch("https://ulhoa-0a02024d350a.herokuapp.com/api/vendedores");
-    if (!resposta.ok) throw new Error("Erro ao buscar vendedores");
-
-    const vendedores = await resposta.json();
-
-    // Limpar opções anteriores
-    select.innerHTML = `<option value="">Selecione um vendedor</option>`;
-
-    vendedores.forEach(v => {
-      const option = document.createElement("option");
-      option.value = v.nome;
-      option.textContent = v.nome;
-      select.appendChild(option);
+    const response = await fetch('https://ulhoa-0a02024d350a.herokuapp.com/omie/vendedores', {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${TOKEN}`
+      },
     });
-  } catch (erro) {
-    console.error("❌ Erro ao carregar vendedores:", erro);
-    select.innerHTML = `<option value="">Erro ao carregar</option>`;
+
+    if (!response.ok) throw new Error('Erro ao buscar vendedores');
+
+    const vendedores = await response.json(); // contém { cadastro: [...] }
+
+    const select = document.getElementById('vendedorResponsavel');
+    if (!select) {
+      console.warn('⚠️ Elemento #vendedorResponsavel não encontrado no DOM.');
+      return;
+    }
+
+    select.innerHTML = '<option value="">Selecione</option>';
+
+    (vendedores.cadastro || []).forEach(v => {
+      const nomeMaiusculo = v.nome.toUpperCase();
+      const opt = new Option(nomeMaiusculo, nomeMaiusculo); // nome como texto e valor
+      select.appendChild(opt);
+    });
+
+    console.log(
+      `%c✅ ${vendedores.cadastro?.length || 0} vendedores carregados com sucesso.`,
+      'color: green; font-weight: bold;'
+    );
+
+  } catch (err) {
+    console.error('❌ Erro ao carregar vendedores:', err);
   }
 }
+
 
 // Chame após o DOM estar carregado
 document.addEventListener("DOMContentLoaded", carregarVendedores);
@@ -41,16 +53,22 @@ function adicionarParcela() {
   div.className = "row g-2 align-items-end mb-2";
 
   div.innerHTML = `
-    <div class="col-3 col-lg-2">
-      <label class="form-label mb-0">Tipo Monetário</label>
-      <select class="form-select tipo-monetario">
-        <option value="" disabled selected>Selecione…</option>
-        <option value="PIX">PIX</option>
-        <option value="Boleto">Boleto</option>
-        <option value="Dinheiro">Dinheiro</option>
-        <option value="Cartão">Cartão</option>
-      </select>
-    </div>
+ <div class="col-3 col-lg-2">
+    <label class="form-label mb-0">Tipo Monetário</label>
+    <select class="form-select tipo-monetario" id="selectTipoMonetario">
+      <option value="" disabled selected>Selecione…</option>
+      <option value="PIX">Pix</option>
+      <option value="DIN">Dinheiro</option>
+      <option value="CRCP">Cartão Parcelado</option>
+      <option value="CRC">Cartão de Crédito</option>
+      <option value="CRD">Cartão de Débito</option>
+      <option value="BOLR">Boleto Recorrente</option>
+      <option value="BOLV">Boleto à Vista</option>
+      <option value="PER">Permuta</option>
+    </select>
+  </div>
+
+    
 
     <div class="col-4 col-lg-3">
       <label class="form-label mb-0">Condição de Pagto</label>
@@ -137,16 +155,17 @@ function recalcularParcelasComPercentual() {
 
 
 function calcularTotalDosGrupos() {
-  const totais = document.querySelectorAll("table tfoot td:last-child strong");
-  let total = 0;
+  const texto = document.querySelector("#valorFinalTotal").textContent.trim();
 
-  totais.forEach(el => {
-    const texto = el.textContent?.replace("R$", "").replace(/\./g, "").replace(",", ".") || "0";
-    total += parseFloat(texto) || 0;
-  });
+  // Remove "R$" e espaços extras
+  const valorLimpo = texto.replace("R$", "").trim();
 
-  return total;
+  // Converte direto para número com parseFloat (mantém ponto decimal)
+  const numero = parseFloat(valorLimpo);
+
+  return isNaN(numero) ? 0 : numero;
 }
+
 
 function validarSomatorioParcelas() {
   const totalGrupos = calcularTotalDosGrupos();

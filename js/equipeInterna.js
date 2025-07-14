@@ -24,38 +24,36 @@ function capturarEquipeInterna() {
 }
 
 async function carregarVendedores() {
-  const TOKEN = localStorage.getItem('accessToken');   // 🔐 salvo no login
-  if (!TOKEN) {
-    console.warn('⚠️ Token não encontrado — usuário não autenticado.');
-    return;
-  }
+  const TOKEN = localStorage.getItem('accessToken');
 
   try {
-    const response = await fetch('https://ulhoa-0a02024d350a.herokuapp.com/api/vendedores', {
-       headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${TOKEN}`   // ⬅️ token JWT
-  },
+    const response = await fetch('https://ulhoa-0a02024d350a.herokuapp.com/omie/vendedores', {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${TOKEN}`
+      },
     });
 
     if (!response.ok) throw new Error('Erro ao buscar vendedores');
 
-    const vendedores = await response.json();
-    const select = document.getElementById('vendedorResponsavel');
+    const vendedores = await response.json(); // contém { cadastro: [...] }
 
+    const select = document.getElementById('vendedorResponsavel');
     if (!select) {
       console.warn('⚠️ Elemento #vendedorResponsavel não encontrado no DOM.');
       return;
     }
 
     select.innerHTML = '<option value="">Selecione</option>';
-    vendedores.forEach(v => {
-      const opt = new Option(v.nome, v._id);
+
+    (vendedores.cadastro || []).forEach(v => {
+      const nomeMaiusculo = v.nome.toUpperCase();
+      const opt = new Option(nomeMaiusculo, nomeMaiusculo); // nome como texto e valor
       select.appendChild(opt);
     });
 
     console.log(
-      `%c✅ ${vendedores.length} vendedores carregados com sucesso.`,
+      `%c✅ ${vendedores.cadastro?.length || 0} vendedores carregados com sucesso.`,
       'color: green; font-weight: bold;'
     );
 
@@ -63,6 +61,7 @@ async function carregarVendedores() {
     console.error('❌ Erro ao carregar vendedores:', err);
   }
 }
+
 
 
 // Inicializa ao carregar o DOM

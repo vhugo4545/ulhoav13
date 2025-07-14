@@ -21,204 +21,8 @@ function fecharPopupPendencias() {
   document.getElementById("overlayPopup").style.display = "none";
 }
 
-async function atualizarNaOmie() {
-  const payload = gerarPayloadOmie();
-  if (!payload) return;
-
-  try {
-    const resposta = await fetch("https://ulhoa-0a02024d350a.herokuapp.com/api/omie/pedidos", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const dados = await resposta.json();
-    console.log("📦 Retorno da Omie:", dados);
-
-    const descricao = dados?.descricao_status || "";
-
-    if (descricao.includes("Pedido cadastrado com sucesso")) {
-      mostrarPopupCustomizado("✅ Sucesso!", descricao, "success");
-    } else {
-      mostrarPopupCustomizado("❌ Erro ao enviar para Omie", descricao || "Retorno inesperado", "error");
-    }
-  } catch (erro) {
-    console.error("❌ Erro ao enviar para Omie:", erro);
-    mostrarPopupCustomizado("❌ Erro de conexão", "Falha ao comunicar com a Omie.", "error");
-  }
-}
-
-
-function gerarNumeroPedidoUnico() {
-  const agora = new Date();
-  const pad = n => n.toString().padStart(2, '0');
-
-  const ano = agora.getFullYear().toString().slice(-2); // dois últimos dígitos do ano
-  const mes = pad(agora.getMonth() + 1);
-  const dia = pad(agora.getDate());
-  const hora = pad(agora.getHours());
-  const minuto = pad(agora.getMinutes());
-  const segundo = pad(agora.getSeconds());
-
-  return `${ano}${mes}${dia}${hora}${minuto}${segundo}001`; // total de 15 caracteres
-}
-
-
-function gerarNumeroPedidoUnico() {
-  const agora = new Date();
-  const pad = n => n.toString().padStart(2, '0');
-
-  const ano = agora.getFullYear().toString().slice(-2); // últimos 2 dígitos
-  const mes = pad(agora.getMonth() + 1);
-  const dia = pad(agora.getDate());
-  const hora = pad(agora.getHours());
-  const minuto = pad(agora.getMinutes());
-  const segundo = pad(agora.getSeconds());
-
-  return `${ano}${mes}${dia}${hora}${minuto}${segundo}001`; // total: 15 caracteres
-}
-
-function gerarPayloadOmie() {
-  const pendencias = [];
-
-  const clientes = document.querySelectorAll("#clientesWrapper .cliente-item");
-  const codigoCliente = clientes[0]?.querySelector(".codigoCliente")?.value?.trim();
-  if (!codigoCliente) pendencias.push("Código do cliente não preenchido.");
-
-  const primeiraDataParcelaRaw = Array.from(document.querySelectorAll(".data-parcela"))
-    .map(el => el.value?.trim())
-    .find(v => !!v);
-  const primeiraDataParcela = formatarDataBR(primeiraDataParcelaRaw);
-  if (!primeiraDataParcela) pendencias.push("Data da 1ª parcela não preenchida.");
-
-  const linhasParcelas = document.querySelectorAll("#listaParcelas .row");
-  const blocos = document.querySelectorAll("[id^='bloco-']");
-
-  if (pendencias.length > 0) {
-    mostrarPopupPendencias(pendencias);
-    return null;
-  }
-
-  const numeroPedido = gerarNumeroPedidoUnico();
-
-  const payload = {
-    cabecalho: {
-      codigo_cliente: codigoCliente,
-      codigo_pedido_integracao: numeroPedido,
-      data_previsao: primeiraDataParcela,
-      etapa: "10",
-      numero_pedido: numeroPedido,
-      codigo_parcela: "999",
-      quantidade_itens: blocos.length
-    },
-    det: [],
-    frete: { modalidade: "9" },
-    informacoes_adicionais: {
-      codigo_categoria: "1.01.01",
-      codigo_conta_corrente: 2514395098,
-      consumidor_final: "S",
-      enviar_email: "N"
-    },
-    agropecuario: {
-      cNumReceita: "",
-      cCpfResponsavel: "",
-      nTipoGuia: 1,
-      cUFGuia: "",
-      cSerieGuia: "",
-      nNumGuia: 1
-    },
-    lista_parcelas: { parcela: [] }
-  };
-
-  // Produtos por grupo
-  let totalGrupos = 0;
-  blocos.forEach(bloco => {
-    const tabela = bloco.querySelector("table");
-    const linhas = tabela?.querySelectorAll("tbody tr");
-    const totalGrupoEl = tabela?.querySelector("tfoot tr td:last-child strong");
-    const totalTexto = totalGrupoEl?.textContent?.replace("R$", "").replace(/\./g, "").replace(",", ".") || "0";
-    const valorTotal = parseFloat(totalTexto) || 0;
-
-    if (!linhas?.length) return;
-
-    const primeiroProduto = linhas[0];
-    const codigoProduto = primeiroProduto.querySelector("td:nth-child(5)")?.textContent?.trim() || "";
-    const descricao = primeiroProduto.querySelector("td:nth-child(2)")?.textContent?.trim() || "";
-
-    payload.det.push({
-      ide: { codigo_item_integracao: numeroPedido },
-      inf_adic: { peso_bruto: 1, peso_liquido: 1 },
-      produto: {
-        cfop: "5.102",
-        codigo_produto: codigoProduto,
-        descricao,
-        ncm: "9403.30.00",
-        quantidade: 1,
-        tipo_desconto: "V",
-        unidade: "UN",
-        valor_desconto: 0,
-        valor_unitario: valorTotal
-      }
-    });
-
-    totalGrupos += valorTotal;
-  });
-
-  // Parcelas
-  let somaParcelas = 0;
-  linhasParcelas.forEach((linha, i) => {
-    const valorStr = linha.querySelector(".valor-parcela")?.value?.replace("R$", "").replace(/\./g, "").replace(",", ".") || "0";
-    const valor = parseFloat(valorStr) || 0;
-    const dataISO = linha.querySelector(".data-parcela")?.value || "";
-    const dataFormatada = formatarDataBR(dataISO);
-    const percentual = totalGrupos > 0 ? ((valor / totalGrupos) * 100).toFixed(2) : 0;
-
-    somaParcelas += valor;
-
-    payload.lista_parcelas.parcela.push({
-      data_vencimento: dataFormatada,
-      numero_parcela: i + 1,
-      percentual,
-      valor: parseFloat(valor.toFixed(2))
-    });
-  });
-
-  // Corrigir diferença entre soma das parcelas e total dos grupos
-  const totalGruposRounded = parseFloat(totalGrupos.toFixed(2));
-  const somaParcelasRounded = parseFloat(somaParcelas.toFixed(2));
-
-  if (Math.abs(totalGruposRounded - somaParcelasRounded) > 1) {
-    const diferenca = totalGruposRounded - somaParcelasRounded;
-
-    const ultimaParcela = payload.lista_parcelas.parcela.at(-1);
-    if (ultimaParcela) {
-      ultimaParcela.valor = parseFloat((ultimaParcela.valor + diferenca).toFixed(2));
-      ultimaParcela.percentual = ((ultimaParcela.valor / totalGruposRounded) * 100).toFixed(2);
-
-      const inputs = document.querySelectorAll(".valor-parcela");
-      const ultimoInput = inputs[inputs.length - 1];
-      if (ultimoInput) {
-        ultimoInput.value = `R$ ${ultimaParcela.valor.toFixed(2).replace(".", ",")}`;
-        ultimoInput.dataset.percentual = parseFloat(ultimaParcela.percentual);
-      }
-
-      console.warn(`⚠️ Ajuste automático aplicado na última parcela: diferença de R$ ${diferenca.toFixed(2)}`);
-    } else {
-      mostrarPopupPendencias([
-        `Não foi possível ajustar parcelas. Nenhuma parcela encontrada.`
-      ]);
-      return null;
-    }
-  }
-
-  console.log("📦 Payload gerado:", payload);
-  return payload;
-}
-
-
-
 function mostrarPopupCustomizado(titulo, mensagem, tipo = "info") {
-  // Remove popup anterior, se existir
+  ocultarCarregando();
   const popupExistente = document.getElementById("popup-status-omie");
   if (popupExistente) popupExistente.remove();
 
@@ -270,3 +74,214 @@ function mostrarPopupCustomizado(titulo, mensagem, tipo = "info") {
   overlay.appendChild(box);
   document.body.appendChild(overlay);
 }
+
+function gerarNumeroPedidoUnico() {
+  const agora = new Date();
+  const pad = n => n.toString().padStart(2, '0');
+  const ano = agora.getFullYear().toString().slice(-2);
+  const mes = pad(agora.getMonth() + 1);
+  const dia = pad(agora.getDate());
+  const hora = pad(agora.getHours());
+  const minuto = pad(agora.getMinutes());
+  const segundo = pad(agora.getSeconds());
+  return `${ano}${mes}${dia}${hora}${minuto}${segundo}001`;
+}
+
+async function atualizarNaOmie() {
+  mostrarCarregando();
+
+  const botao = document.getElementById("btnEnviarOmie");
+  const spinner = document.getElementById("spinnerOmie");
+  if (spinner) spinner.style.display = "inline-block";
+  if (botao) botao.disabled = true;
+
+  setTimeout(async () => {
+    const payload = await gerarPayloadOmie();
+
+    if (!payload) {
+      ocultarCarregando();
+      if (spinner) spinner.style.display = "none";
+      if (botao) botao.disabled = false;
+      return;
+    }
+
+    console.log("📦 Payload gerado:", payload);
+
+    try {
+      const resposta = await fetch("https://ulhoa-0a02024d350a.herokuapp.com/api/omie/pedidos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("accessToken") || ""}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await resposta.json();
+
+      if (resposta.ok) {
+        mostrarPopupCustomizado("✅ Sucesso!", "Pedido enviado com sucesso à Omie.", "success");
+        console.log("📤 Enviado à Omie:", data);
+      } else {
+        mostrarPopupCustomizado("❌ Erro ao enviar", data?.erro || "Erro desconhecido ao enviar pedido.", "error");
+        console.error("❌ Erro:", data);
+      }
+
+    } catch (erro) {
+      mostrarPopupCustomizado("❌ Erro na conexão", "Não foi possível enviar o pedido. Verifique a conexão com o servidor.", "error");
+      console.error("❌ Erro de envio:", erro);
+    }
+
+    if (spinner) spinner.style.display = "none";
+    if (botao) botao.disabled = false;
+    ocultarCarregando();
+  }, 300);
+}
+
+async function gerarPayloadOmie() {
+  const pendencias = [];
+
+  const clientes = document.querySelectorAll("#clientesWrapper .cliente-item");
+  const codigoCliente = clientes[0]?.querySelector(".codigoCliente")?.value?.trim();
+  if (!codigoCliente) pendencias.push("Código do cliente não preenchido.");
+
+  const primeiraDataParcelaRaw = Array.from(document.querySelectorAll(".data-parcela"))
+    .map(el => el.value?.trim())
+    .find(v => !!v);
+  const primeiraDataParcela = formatarDataBR(primeiraDataParcelaRaw);
+  if (!primeiraDataParcela) pendencias.push("Data da 1ª parcela não preenchida.");
+
+  const linhasParcelas = document.querySelectorAll("#listaParcelas .row");
+  const blocos = document.querySelectorAll("[id^='bloco-']");
+
+  if (pendencias.length > 0) {
+    mostrarPopupPendencias(pendencias);
+    return null;
+  }
+
+  const numeroPedido = gerarNumeroPedidoUnico();
+
+  const payload = {
+    cabecalho: {
+      codigo_cliente: codigoCliente,
+      codigo_pedido_integracao: numeroPedido,
+      data_previsao: primeiraDataParcela,
+      etapa: "10",
+      numero_pedido: numeroPedido,
+      codigo_parcela: "999",
+      quantidade_itens: 0
+    },
+    det: [],
+    lista_parcelas: { parcela: [] }
+  };
+
+  const ambientesMarcados = Array.from(document.querySelectorAll(".resumo-totalizador .ambiente-toggle:checked"))
+    .map(cb => {
+      const label = cb.closest(".form-check")?.querySelector("label")?.textContent || "";
+      const match = label.match(/"([^"]+)"/);
+      return match ? match[1].trim() : null;
+    })
+    .filter(Boolean);
+
+  let totalGrupos = 0;
+
+  blocos.forEach(bloco => {
+    const inputAmbiente = bloco.querySelector("input[placeholder='Ambiente'][data-id-grupo]");
+    const nomeAmbiente = inputAmbiente?.value?.trim() || "Ambiente não identificado";
+
+    if (!ambientesMarcados.includes(nomeAmbiente)) return;
+
+    const tabela = bloco.querySelector("table");
+    const linhas = tabela?.querySelectorAll("tbody tr");
+    const totalGrupoEl = tabela?.querySelector("tfoot tr td:last-child strong");
+    const totalTexto = totalGrupoEl?.textContent?.replace("R$", "").replace(/\./g, "").replace(",", ".") || "0";
+    let valorTotal = parseFloat(totalTexto) || 0;
+    valorTotal = parseFloat(valorTotal.toFixed(2));
+
+    if (!linhas?.length) return;
+
+    const primeiroProduto = linhas[0];
+    const codigoProduto = primeiroProduto.querySelector("td:nth-child(5)")?.textContent?.trim() || "";
+    const descricao = primeiroProduto.querySelector("td:nth-child(2)")?.textContent?.trim() || "";
+
+    payload.det.push({
+      ide: { codigo_item_integracao: numeroPedido },
+      inf_adic: { peso_bruto: 1, peso_liquido: 1 },
+      produto: {
+        cfop: "5.102",
+        codigo_produto: codigoProduto,
+        descricao,
+        ncm: "9403.30.00",
+        quantidade: 1,
+        tipo_desconto: "V",
+        unidade: "UN",
+        valor_desconto: 0,
+        valor_unitario: valorTotal / 100
+      }
+    });
+
+    totalGrupos += valorTotal;
+    payload.cabecalho.quantidade_itens++;
+  });
+
+  // 💳 Parcelas
+  let somaParcelas = 0;
+  linhasParcelas.forEach((linha, i) => {
+    const valorStr = linha.querySelector(".valor-parcela")?.value?.replace("R$", "").replace(/\./g, "").replace(",", ".") || "0";
+    const valor = parseFloat(valorStr) || 0;
+    const dataISO = linha.querySelector(".data-parcela")?.value || "";
+    const dataFormatada = formatarDataBR(dataISO);
+    const percentual = totalGrupos > 0 ? ((valor / totalGrupos) * 100).toFixed(2) : 0;
+
+    somaParcelas += valor;
+
+    payload.lista_parcelas.parcela.push({
+      data_vencimento: dataFormatada,
+      numero_parcela: i + 1,
+      percentual,
+      valor: parseFloat(valor.toFixed(2))
+    });
+  });
+
+  // Ajusta última parcela se houver diferença
+  const totalGruposRounded = parseFloat(totalGrupos.toFixed(2));
+  const somaParcelasRounded = parseFloat(somaParcelas.toFixed(2));
+  if (Math.abs(totalGruposRounded - somaParcelasRounded) > 1) {
+    const diferenca = totalGruposRounded - somaParcelasRounded;
+    const ultimaParcela = payload.lista_parcelas.parcela.at(-1);
+    if (ultimaParcela) {
+      ultimaParcela.valor = parseFloat((ultimaParcela.valor + diferenca).toFixed(2));
+      ultimaParcela.percentual = ((ultimaParcela.valor / totalGruposRounded) * 100).toFixed(2);
+    } else {
+      mostrarPopupPendencias(["Não foi possível ajustar parcelas. Nenhuma parcela encontrada."]);
+      return null;
+    }
+  }
+
+  // ✅ Blocos adicionais obrigatórios
+  payload.frete = {
+    modalidade: "9"
+  };
+
+  payload.informacoes_adicionais = {
+    codigo_categoria: "1.01.01",
+    codigo_conta_corrente: 2523861035,
+    consumidor_final: "S",
+    enviar_email: "N"
+  };
+
+  payload.agropecuario = {
+    cNumReceita: "",
+    cCpfResponsavel: "",
+    nTipoGuia: 1,
+    cUFGuia: "",
+    cSerieGuia: "",
+    nNumGuia: 1
+  };
+
+  // ✅ Log final
+  console.log("📦 Payload final gerado para Omie:", payload);
+
+  return payload;
+}
+

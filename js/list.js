@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", async () => {
+  mostrarCarregando()
   const tableBody     = document.querySelector("#data-table tbody");
   const prevPageBtn   = document.getElementById("prev-page");
   const nextPageBtn   = document.getElementById("next-page");
@@ -10,7 +11,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const table         = document.getElementById("data-table");
   const alertaVencimento = document.getElementById("alerta-vencimento");
 
-  const API_BASE = "http://localhost:3000";
+  const API_BASE = "https://ulhoa-0a02024d350a.herokuapp.com";
   const TOKEN = localStorage.getItem("accessToken");
 
   let data = [];
@@ -121,47 +122,51 @@ document.addEventListener("DOMContentLoaded", async () => {
     return result;
   }
 
-  function renderTable(filteredData = data) {
-    tableBody.innerHTML = "";
-    const start = (currentPage - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
+function renderTable(filteredData = data) {
+  ocultarCarregando()
+  const tipoUsuario = localStorage.getItem("usuarioTipo");
+  const nomeUsuario = localStorage.getItem("usuarioNome");
 
-    filteredData.slice(start, end).forEach((item, index) => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${start + index + 1}</td>
-        <td>${item.date}</td>
-        <td>${item.value}</td>
-        <td>${item.vendedor}</td>
-        <td>${item.cliente}</td>
-        <td>${item.evento}</td>
-        <td>${item.tipoProposta}</td>
-        <td><span class="status ${item.status.toLowerCase().replace(/\s/g, "-")}">${item.status}</span></td>
-        <td>
-          <span title="Validade da proposta">${item.validade}</span>
-          ${item.vencida ? '<br><span style="color:red; font-weight:bold;">VENCIDA</span>' : ''}
-        </td>
-        <td class="actions">
-          <button class="edit-btn" data-id="${item._id}">
-            <span class="material-icons-outlined">edit</span>
-          </button>
-          <button class="duplicate-btn" data-id="${item._id}">
-            <span class="material-icons-outlined">content_copy</span>
-          </button>
-          <button class="delete-btn" data-id="${item._id}">
-            <span class="material-icons-outlined">delete</span>
-          </button>
-        </td>
-      `;
-      tableBody.appendChild(row);
-    });
-
-    pageInfo.textContent = `Página ${currentPage}`;
-    prevPageBtn.disabled = currentPage === 1;
-    nextPageBtn.disabled = end >= filteredData.length;
-
-    addActionEventListeners(filteredData);
+  // Se não for admin, filtra apenas propostas do vendedor logado
+  if (tipoUsuario !== "admin") {
+    filteredData = filteredData.filter(item => item.vendedor === nomeUsuario);
   }
+
+  tableBody.innerHTML = "";
+  const start = (currentPage - 1) * rowsPerPage;
+  const end = start + rowsPerPage;
+
+  filteredData.slice(start, end).forEach((item, index) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${start + index + 1}</td>
+      <td>${item.date}</td>
+      <td>${item.vendedor}</td>
+      <td>${item.cliente}</td>
+      <td>${item.evento}</td>
+      <td>${item.tipoProposta}</td>
+      <td><span class="status ${item.status.toLowerCase().replace(/\s/g, "-")}">${item.status}</span></td>
+      <td>
+        <span title="Validade da proposta">${item.validade}</span>
+        ${item.vencida ? '<br><span style="color:red; font-weight:bold;">VENCIDA</span>' : ''}
+      </td>
+      <td class="actions">
+        <button class="edit-btn" data-id="${item._id}">
+          <span class="material-icons-outlined">edit</span>
+        </button>
+        
+      </td>
+    `;
+    tableBody.appendChild(row);
+  });
+
+  pageInfo.textContent = `Página ${currentPage}`;
+  prevPageBtn.disabled = currentPage === 1;
+  nextPageBtn.disabled = end >= filteredData.length;
+
+  addActionEventListeners(filteredData);
+}
+
 
   function renderAlertas(vencidas, prestesAVencer) {
     if (!alertaVencimento) return;

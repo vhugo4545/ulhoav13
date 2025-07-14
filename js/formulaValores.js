@@ -1,6 +1,7 @@
 function preencherValoresFinanceiros(blocoId) {
-  const bloco = document.getElementById(blocoId);
 
+  const bloco = document.getElementById(blocoId);
+ atualizarValoresDasParcelas()
   if (!bloco) {
     console.warn(`Bloco ${blocoId} não encontrado.`);
     return;
@@ -21,7 +22,6 @@ function preencherValoresFinanceiros(blocoId) {
   const margemLucro = dados.margem_lucro / 100;
   const gastosTotais = dados.gasto_operacional / 100;
   const negociacao = dados.margem_negociacao / 100;
-  console.log("negociação", negociacao  )
   const miudezas = dados.miudezas / 100;
   const comissaoArquiteta = dados.comissao_arquiteta / 100;
   const margemSegunraca = dados.margem_seguranca / 100;
@@ -86,21 +86,73 @@ const campoValorMargemLucro =  (campoValorMinimo-  somaValotres) - campoValorSeg
 const campoValorMiudezas = custoMaterial - custoMaterial / (1 + miudezas);
 const campoNegocia = precoSugerido - precoMinimo
 
-// Impressão dos valores calculados
-console.log("Valor Gastos Operacionais:", campoValorGastosOperacionais.toFixed(2));
-console.log("Margem de Lucro:", campoValorMargemLucro.toFixed(2));
-console.log("Valor Impostos:", campoValorImpostos.toFixed(2));
-console.log("Valor Mínimo:", campoValorMinimo.toFixed(2));
-console.log("Valor Margem + comissão arquiteto:", campoVAlorSegunrnçaDesperdicio.toFixed(2));
-console.log("Miudezas:", campoValorMiudezas.toFixed(2));
-console.log("Valor sugerido:", campoNegocia.toFixed(2));
 
 
- adicionarBotaoResumoFinanceiro(blocoId)
+adicionarBotaoResumoFinanceiro(blocoId)
+adicionarTotalizadoresPorAmbienteComAgrupamento();
 
  }
 
- 
+ function calcularValoresFinanceiros(blocoId) {
+  const bloco = document.getElementById(blocoId);
+  if (!bloco) return null;
+
+  // Tenta encontrar valores mesmo se não tiver input
+  const buscarValor = (nome, padrao = 0) => {
+    const input = bloco.querySelector(`input[name='${nome}']`);
+    if (!input) return padrao;
+    const valor = input.value.trim().replace(',', '.').replace('R$', '');
+    return parseFloat(valor) || padrao;
+  };
+
+  // Busca os percentuais ou usa 0 como fallback
+  const impostos = buscarValor("impostos") / 100;
+  const margemLucro = buscarValor("margem_lucro") / 100;
+  const gastosTotais = buscarValor("gasto_operacional") / 100;
+  const negociacao = buscarValor("margem_negociacao") / 100;
+  const miudezas = buscarValor("miudezas") / 100;
+  const comissaoArquiteta = buscarValor("comissao_arquiteta") / 100;
+  const margemSeguranca = buscarValor("margem_seguranca") / 100;
+
+  const tabela = bloco.querySelector("table");
+  if (!tabela) return null;
+
+  let materialBase = 0;
+  tabela.querySelectorAll("tbody tr").forEach(linha => {
+    const valorStr = linha.querySelector(".custo-unitario")?.textContent?.replace("R$", "").replace(",", ".");
+    const valor = parseFloat(valorStr || 0);
+    materialBase += valor;
+  });
+
+  const custoMaterial = materialBase * (1 + miudezas);
+  const divisor = 1 - (gastosTotais + margemLucro + impostos);
+  if (divisor <= 0) {
+    console.error("❌ Erro: soma dos percentuais maior ou igual a 100%");
+    return null;
+  }
+
+  const precoMinimo = (custoMaterial / divisor) * (1 + comissaoArquiteta + margemSeguranca);
+  const precoSugerido = precoMinimo * (1 + negociacao);
+
+  const campoVAlorSegunrnçaDesperdicio = precoMinimo - precoMinimo / (1 + comissaoArquiteta + margemSeguranca);
+  const campoValorGastosOperacionais = (precoMinimo - campoVAlorSegunrnçaDesperdicio) * gastosTotais;
+  const campoValorImpostos = impostos * precoMinimo;
+  const somaValores = campoValorImpostos + custoMaterial + campoValorGastosOperacionais;
+  const campoValorMargemLucro = (precoMinimo - somaValores) - campoVAlorSegunrnçaDesperdicio;
+  const campoValorMiudezas = custoMaterial - custoMaterial / (1 + miudezas);
+  const campoNegocia = precoSugerido - precoMinimo;
+
+  return {
+    campoVAlorSegunrnçaDesperdicio,
+    campoValorGastosOperacionais,
+    campoValorImpostos,
+    campoValorMinimo: precoMinimo,
+    campoValorMargemLucro,
+    campoValorMiudezas,
+    campoNegocia
+  };
+}
+
 
 function adicionarBotaoResumoFinanceiro(blocoId) {
   const bloco = document.getElementById(blocoId);
@@ -239,6 +291,68 @@ function calcularValoresFinanceiros(blocoId) {
   };
 }
 
+function duplicarBlocoViaDOM(idOriginal) {
+  const blocoOriginal = document.getElementById(idOriginal);
+  if (!blocoOriginal) {
+    console.warn(`❌ Bloco com ID ${idOriginal} não encontrado.`);
+    return;
+  }
+
+  // Novo ID único
+  const novoId = `bloco-${blocoIndex++}`;
+
+  // Clonar DOM
+  const novoBloco = blocoOriginal.cloneNode(true);
+  novoBloco.id = novoId;
+
+  // Atualiza todos os atributos de ID e referencias internas
+  const htmlAtualizado = novoBloco.innerHTML.replaceAll(idOriginal, novoId);
+  novoBloco.innerHTML = htmlAtualizado;
+
+  // Atualiza atributos específicos que não são apenas IDs
+  const elementos = novoBloco.querySelectorAll("*");
+  elementos.forEach(el => {
+    if (el.id?.includes(idOriginal)) el.id = el.id.replace(idOriginal, novoId);
+    if (el.getAttribute("data-id-grupo") === idOriginal)
+      el.setAttribute("data-id-grupo", novoId);
+
+    if (el.getAttribute("onclick")?.includes(idOriginal))
+      el.setAttribute("onclick", el.getAttribute("onclick").replaceAll(idOriginal, novoId));
+
+    if (el.getAttribute("data-bs-target")?.includes(idOriginal))
+      el.setAttribute("data-bs-target", el.getAttribute("data-bs-target").replaceAll(idOriginal, novoId));
+
+    if (el.getAttribute("aria-controls")?.includes(idOriginal))
+      el.setAttribute("aria-controls", el.getAttribute("aria-controls").replaceAll(idOriginal, novoId));
+
+    if (el.getAttribute("data-bs-parent")?.includes(idOriginal))
+      el.setAttribute("data-bs-parent", el.getAttribute("data-bs-parent").replaceAll(idOriginal, novoId));
+  });
+
+  // Copia valores dos inputs manualmente (evita inputs limpos pelo cloneNode)
+  const inputsOriginais = blocoOriginal.querySelectorAll("input, select, textarea");
+  const inputsDuplicados = novoBloco.querySelectorAll("input, select, textarea");
+
+  inputsOriginais.forEach((inputOrig, index) => {
+    const valor = inputOrig.value;
+    const inputNovo = inputsDuplicados[index];
+    if (inputNovo) inputNovo.value = valor;
+  });
+
+  // Adiciona bloco ao DOM
+  const container = document.getElementById("blocosProdutosContainer");
+  container.appendChild(novoBloco);
+
+  // Reativa funcionalidades
+  setTimeout(() => {
+    if (typeof ativarRecalculoEmTodasTabelas === "function") ativarRecalculoEmTodasTabelas();
+    if (typeof preencherValoresFinanceiros === "function") preencherValoresFinanceiros(novoId);
+    if (typeof simularFocusEBlurEmTodosCamposFormula === "function") simularFocusEBlurEmTodosCamposFormula();
+  }, 500);
+
+  console.log(`✅ Bloco duplicado: ${idOriginal} → ${novoId}`);
+}
+
 
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -271,6 +385,8 @@ document.addEventListener('input', function (e) {
 
 // Pare aqui
 function criarBlocoDeProposta(nomeGrupo = "", ambiente = "") {
+
+
   const idSuffix = `bloco-${blocoIndex++}`;
   const container = document.getElementById("blocosProdutosContainer");
   if (!container) {
@@ -321,7 +437,11 @@ function criarBlocoDeProposta(nomeGrupo = "", ambiente = "") {
                 ${estaEditandoModelo ? 'style="display:none;"' : ''}
               >
               <button class="btn btn-outline-danger btn-sm" type="button" onclick="removerBloco('${idSuffix}')" title="Excluir grupo">Excluir</button>
-            </div>
+          <button class="btn btn-outline-secondary btn-sm" type="button"
+        onclick="duplicarBlocoViaDOM('${idSuffix}')"
+        title="Duplicar grupo">Duplicar</button>
+
+              </div>
           </div>
         </h2>
         <div id="collapse-${idSuffix}" class="accordion-collapse collapse" data-bs-parent="#accordion-${idSuffix}">
@@ -423,8 +543,33 @@ function criarBlocoDeProposta(nomeGrupo = "", ambiente = "") {
     if (typeof preencherValoresFinanceiros === "function") preencherValoresFinanceiros(idSuffix);
     if (typeof simularFocusEBlurEmTodosCamposFormula === "function") simularFocusEBlurEmTodosCamposFormula();
   }, 1000);
+  if (window.location.pathname.includes("criar.html")) {
+  setTimeout(() => {
+    atualizarPrecosOmieNaDOM();
+    ativarInputsDescricaoComDelay()
+  }, 1000); // Aguarda 1 segundo para garantir que tudo esteja carregado
+}
+
 
   return idSuffix;
+}
+
+
+function ativarInputsDescricaoComDelay() {
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('input[type="text"][name="descricao"].form-control.form-control-sm');
+
+    inputs.forEach(input => {
+      // Dispara eventos de input e change para "reativar" lógicas ligadas a eles
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+
+      // Se quiser forçar algum valor, por exemplo, limpar ou reatribuir o mesmo texto:
+      input.value = input.value; // Reatribui o próprio valor para forçar reatividade
+    });
+
+    console.log(`✅ ${inputs.length} inputs de descrição reativados após 1s`);
+  }, 500);
 }
 
 
@@ -452,10 +597,10 @@ function handleDrop(event) {
 
 function ativarRecalculoEmTodasTabelas() {
   const tabelas = document.querySelectorAll("table[id^='tabela-bloco-']");
-  console.log(`🔍 Encontradas ${tabelas.length} tabelas para recalcular`);
+ 
 
   tabelas.forEach((tabela, index) => {
-    console.log(`📊 Tabela ${index + 1} ID: ${tabela.id}`);
+
 
     const atualizarLinha = (linha, tentativa = 0) => {
       const custoFinalCell = linha.querySelector(".custo-unitario");
@@ -482,7 +627,7 @@ function ativarRecalculoEmTodasTabelas() {
       const custoFinal = custoUnitario * quantidade;
       custoFinalCell.textContent = `R$ ${custoFinal.toFixed(2)}`;
 
-      console.log(`✅ Linha atualizada - Qtd: ${quantidade}, Unitário: ${custoUnitario}, Final: ${custoFinal}`);
+     
     };
 
     const atualizarTotalTabela = (tabela) => {
@@ -495,7 +640,7 @@ function ativarRecalculoEmTodasTabelas() {
       const totalCell = tabela.querySelector("tfoot td strong");
       if (totalCell) {
         totalCell.textContent = `R$ ${total.toFixed(2)}`;
-        console.log(`💰 Total da tabela ${tabela.id}: R$ ${total.toFixed(2)}`);
+     
       }
     };
 
@@ -519,7 +664,7 @@ function ativarRecalculoEmTodasTabelas() {
 
 
       atualizarLinha(linha); // Executa ao carregar
-      console.log(`📌 Listener adicionado ao input.quantidade`);
+
     });
 
     // Salva valor original de custo unitário
@@ -528,10 +673,11 @@ function ativarRecalculoEmTodasTabelas() {
       if (cell && !cell.dataset.valorOriginal) {
         const val = cell.textContent.replace("R$", "").replace(",", ".").trim();
         cell.dataset.valorOriginal = parseFloat(val || 0);
-        console.log(`🗃️ Valor original salvo: ${cell.dataset.valorOriginal}`);
+      
       }
     });
 
     atualizarTotalTabela(tabela); // Total inicial
+    adicionarTotalizadoresPorAmbienteComAgrupamento();
   });
 }

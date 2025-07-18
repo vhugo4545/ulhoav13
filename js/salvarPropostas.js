@@ -36,7 +36,7 @@ const textoSelecionado = select?.options[select.selectedIndex]?.text || "";
  // Função para buscar e preencher o próximo número do orçamento (incrementando o contador)
 async function preencherNumeroOrcamento() {
   try {
-    const res = await fetch('http://localhost:3000/contador/somar/orcamentos', { method: 'POST' });
+    const res = await fetch('https://ulhoa-0a02024d350a.herokuapp.com/contador/somar/orcamentos', { method: 'POST' });
     const data = await res.json();
     const numFormatado = String(data.novoValor).padStart(5, '0');
     document.getElementById('numeroOrcamento').value = numFormatado;

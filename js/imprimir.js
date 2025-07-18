@@ -109,12 +109,18 @@ function gerarOrcamentoParaImpressaoCompleta() {
       <div class="fw-bold">Total Geral: R$ ${totalGeral.toFixed(2).replace('.', ',')}</div>
     </div>`;
 
-  corpoHTML += `
-    <div class="border p-2 mt-3">
-      <strong>Prazo:</strong><br>${dados.prazos}<br><br>
-      <strong>Condições de Pagamento:</strong><br>${dados.condicao}<br><br>
-      <strong>Condições Gerais:</strong><br>${dados.condicoesGerais}
-    </div>`;
+  const condicoesGeraisFormatada = (dados.condicoesGerais || "")
+  .replace(/•/g, "<br>•");
+
+corpoHTML += `
+  <div class="border p-2 mt-3">
+    <strong>Prazo:</strong><br>${dados.prazos}<br><br>
+    <strong>Condições de Pagamento:</strong><br>${dados.condicao}<br><br>
+    <strong>Condições Gerais:</strong><br>${condicoesGeraisFormatada}
+    <br>
+  </div>
+`;
+
 
   const htmlCompleto = `
     <html>

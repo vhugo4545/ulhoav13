@@ -391,7 +391,7 @@ function atualizarResumoDoGrupo(idSuffix) {
   const primeiro = linhas[0]?.querySelector("td:nth-child(2)")?.textContent?.trim() || "";
   const segundo = linhas[1]?.querySelector("td:nth-child(2)")?.textContent?.trim() || "";
 
-  const resumo = `${primeiro}\nem ${segundo}\nAltura do Montante: ${alturaMontante}\nAltura Final:\nFixação:`;
+  const resumo = `${primeiro}\nem ${segundo}\nAltura do Montante: ${alturaMontante} m \nAltura Final:\nFixação:`;
 
   const textarea = document.getElementById(`resumo-${idSuffix}`);
   if (textarea) textarea.value = resumo;
@@ -467,7 +467,7 @@ function criarBlocoDeProposta(nomeGrupo = "", ambiente = "") {
                         <div class="col-6">
                           <label class="form-label">${param.replace(/_/g, ' ')}</label>
                           <input type="text" name="${param}" class="form-control form-control-sm"
-                            ${(!estaEditandoModelo && !["altura_montante", "numero_montantes", "numero_protecoes", "descricao", "comissao_arquiteta", "margem_negociacao","margem_seguranca"].includes(param))
+                            ${(!estaEditandoModelo && !["altura_montante", "numero_montantes", "numero_protecoes", "descricao", "comissao_arquiteta", "margem_negociacao","margem_seguranca","margem_lucro"].includes(param))
                               ? "readonly style='background:#f3f3f3'" : ""}>
                         </div>
                       `).join("")}

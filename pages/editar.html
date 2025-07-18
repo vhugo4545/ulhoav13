@@ -19,48 +19,61 @@
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <ul>
-      <li><a href="modelo.html"><span class="material-icons-outlined">home</span> Criar Base</a></li>
+    
       <li><a href="../pages/listagem.html"><span class="material-icons-outlined">list</span> Início</a></li>
-      <li><a href="#"><span class="material-icons-outlined">dashboard</span> Dashboard</a></li>
-      <li><a href="#"><span class="material-icons-outlined">settings</span> Configurações</a></li>
-      <li><a href="#"><span class="material-icons-outlined">logout</span> Logout</a></li>
+     
     </ul>
-    <div class="sidebar-footer">
-      <button id="btn-criar" class="sidebar-button" onclick="salvarPropostaEditavel() ">
-        <span class="material-icons-outlined">add_circle_outline</span> Duplicar Proposta
-      </button>
+<div class="sidebar-footer">
+  <button id="btn-criar" class="sidebar-button" onclick="salvarPropostaEditavel()">
+    <span class="material-icons-outlined">add_circle_outline</span><br> Duplicar Proposta
+  </button>
 
-      <button id="btn-editar" class="sidebar-button" onclick="atualizarPropostaEditavel() ">
-        <span class="material-icons-outlined">edit</span> Atualizar ( Salvar )
-      </button>
+  <button id="btn-editar-modelo" class="sidebar-button" onclick="redirecionarParaEdicao()">
+    <span class="material-icons-outlined">edit_note</span><br>  Editar Modelo
+  </button>
 
-      <button id="btn-solicitar" class="sidebar-button" onclick="marcarPendenteAprovacao()">
-        <span class="material-icons-outlined">assignment_turned_in</span> Solicitar Aprovação
-      </button>
-
-
-      <button id="btn-autorizar" class="sidebar-button" onclick="marcarPrecosDivergentesOmie()">
-        <span class="material-icons-outlined">verified_user</span> Autorizar Proposta
-      </button>
-
-      <button id="btn-enviar" class="sidebar-button" onclick=" marcarEnviadoParaCliente()">
-        <span class="material-icons-outlined">send</span> Enviar Proposta
-      </button>
-      <button id="btn-enviar" class="sidebar-button" onclick="marcarAprovadoPeloCliente()">
-        <span class="material-icons-outlined">check_circle</span> Aprovado pelo Cliente
-      </button>
-
-      <button id="btn-gerar-pedido" class="sidebar-button" onclick=" atualizarNaOmie()">
-        <span class="material-icons-outlined">receipt_long</span> Gerar Pedido de Venda
-      </button>
-
-     <button id="btn-gerar-pedido" class="sidebar-button" onclick="atualizarPrecosOmieNaDOM()">
-  <span class="material-icons-outlined">sync</span> Atualizar Preços da Omie
-</button>
+ <a id="btn-editar-formulas" href="modelo.html" class="sidebar-button" style="text-decoration: none; flex-direction: column;">
+  <span class="material-icons-outlined">functions</span>
+  Editar Fórmulas
+</a>
 
 
+  <button id="btn-atualizar" class="sidebar-button" onclick="atualizarPropostaEditavel()">
+    <span class="material-icons-outlined">edit</span><br>  Atualizar (Salvar)
+  </button>
 
-    </div>
+  <button id="btn-solicitar" class="sidebar-button" onclick="marcarPendenteAprovacao()">
+    <span class="material-icons-outlined">assignment_turned_in</span><br> Solicitar Aprovação
+  </button>
+
+  <button id="btn-autorizar" class="sidebar-button" onclick="marcarPrecosDivergentesOmie()">
+    <span class="material-icons-outlined">verified_user</span><br>  Autorizar Proposta
+  </button>
+
+  <button id="btn-enviar-cliente" class="sidebar-button" onclick="marcarEnviadoParaCliente()">
+    <span class="material-icons-outlined">send</span><br>  Enviar Proposta
+  </button>
+
+  <button id="btn-aprovado-cliente" class="sidebar-button" onclick="marcarAprovadoPeloCliente()">
+    <span class="material-icons-outlined">check_circle</span><br>  Aprovado pelo Cliente
+  </button>
+
+  <button id="btn-gerar-pedido" class="sidebar-button" onclick="atualizarNaOmie()">
+    <span class="material-icons-outlined">receipt_long</span><br> Gerar Pedido de Venda
+  </button>
+
+  <button id="btn-atualizar-precos" class="sidebar-button" onclick="atualizarPrecosOmieNaDOM()">
+    <span class="material-icons-outlined">sync</span><br>  Atualizar Preços da Omie
+  </button>
+</div>
+
+<script>
+  function redirecionarParaEdicao() {
+    const id = new URLSearchParams(location.search).get("id");
+    window.location.href = "editar.html?id=" + id;
+  }
+</script>
+
 
   </aside>
 
@@ -83,9 +96,10 @@
             <div id="collapseInfoOrcamento" class="accordion-collapse collapse show">
               <div class="accordion-body">
                 <div class="row g-3">
-                 <div class="col-md-4">
+                  <div class="col-md-4">
                     <label class="form-label">Número do Orçamento</label>
-                    <input type="text" class="form-control" id="numeroOrcamento" readonly tabindex="-1" style="background-color: #e6e6e6; color: #000;">
+                    <input type="text" class="form-control" id="numeroOrcamento" readonly tabindex="-1"
+                      style="background-color: #e6e6e6; color: #000;">
                   </div>
 
                   <div class="col-md-4">
@@ -280,34 +294,6 @@
 
         </div>
       </form>
-      <div class="d-flex justify-content-center my-4 position-relative">
-        <div class="d-flex flex-column align-items-center w-100" style="max-width: 600px;">
-          <div class="input-group input-group-lg shadow w-100">
-            <input id="buscaProduto" type="text" class="form-control text-center"
-              placeholder="Pesquisar produto, cliente ou proposta..." autocomplete="off">
-            <button class="btn btn-primary d-flex align-items-center gap-2 px-4" type="button">
-              <span class="material-icons-outlined">search</span>
-              <span>Buscar</span>
-            </button>
-          </div>
-
-          <button id="fecharSanfonasBtn" class="btn btn-outline-secondary btn-sm w-100 mt-2"
-            onclick="fecharTodasSanfonas()">
-            🔽 Fechar todos os blocos
-          </button>
-
-          <button id="abrirSanfonasBtn" class="btn btn-outline-primary btn-sm w-100 mt-2"
-            onclick="abrirTodasSanfonas()">
-            🔼 Abrir todos os blocos
-          </button>
-
-          <br>
-
-          <ul id="sugestoesProdutos" class="list-group w-100 shadow bg-white mt-2"
-            style="display: none; max-height: 200px; overflow-y: auto;"></ul>
-
-        </div>
-      </div>
 
 
       <div class="col-lg-12" id="blocosProdutosContainer">
@@ -410,7 +396,7 @@
     <button onclick="fecharPopupPendencias()" class="btn btn-secondary w-100">Fechar</button>
   </div>
   <script src="../js/validarToken.js" defer></script>
- <script src="../js/sair.js" defer></script>
+  <script src="../js/sair.js" defer></script>
   <!-- SCRIPTS -->
   <script src="../js/validarToken.js" defer></script>
   <script src="../js/auth.js" defer></script>
@@ -459,10 +445,10 @@
       });
     }
 
-   
+
 
   </script>
- <script>
+  <script>
     // Gera um código de integração aleatório (interno)
     function gerarCodigoClienteIntegracao() {
       const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -497,137 +483,137 @@
       new bootstrap.Modal(modalEl).show();
     }
 
-// Função para remover caracteres não numéricos
-function limparNumero(valor) {
-  return valor.replace(/\D/g, "");
-}
+    // Função para remover caracteres não numéricos
+    function limparNumero(valor) {
+      return valor.replace(/\D/g, "");
+    }
 
-  function abrirTodasSanfonas() {
+    function abrirTodasSanfonas() {
       document.querySelectorAll(".accordion-button").forEach(botao => {
         if (botao.classList.contains("collapsed")) {
           botao.click();
         }
       });
     }
-// Validação de CPF
-function validarCPF(cpf) {
-  cpf = limparNumero(cpf);
-  if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
+    // Validação de CPF
+    function validarCPF(cpf) {
+      cpf = limparNumero(cpf);
+      if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
 
-  let soma = 0;
-  for (let i = 0; i < 9; i++) soma += +cpf[i] * (10 - i);
-  let resto = (soma * 10) % 11;
-  if (resto === 10 || resto === 11) resto = 0;
-  if (resto !== +cpf[9]) return false;
+      let soma = 0;
+      for (let i = 0; i < 9; i++) soma += +cpf[i] * (10 - i);
+      let resto = (soma * 10) % 11;
+      if (resto === 10 || resto === 11) resto = 0;
+      if (resto !== +cpf[9]) return false;
 
-  soma = 0;
-  for (let i = 0; i < 10; i++) soma += +cpf[i] * (11 - i);
-  resto = (soma * 10) % 11;
-  if (resto === 10 || resto === 11) resto = 0;
+      soma = 0;
+      for (let i = 0; i < 10; i++) soma += +cpf[i] * (11 - i);
+      resto = (soma * 10) % 11;
+      if (resto === 10 || resto === 11) resto = 0;
 
-  return resto === +cpf[10];
-}
-
-// Validação de CNPJ
-function validarCNPJ(cnpj) {
-  cnpj = limparNumero(cnpj);
-  if (cnpj.length !== 14 || /^(\d)\1+$/.test(cnpj)) return false;
-
-  let t = cnpj.length - 2,
-    d = cnpj.substring(t),
-    d1 = 0,
-    d2 = 0;
-
-  for (let i = t - 1, j = 5; i >= 0; j = j === 2 ? 9 : j - 1) {
-    d1 += +cnpj[i] * j;
-  }
-
-  d1 = 11 - (d1 % 11);
-  if (d1 >= 10) d1 = 0;
-  if (d1 !== +d[0]) return false;
-
-  for (let i = t, j = 6; i >= 0; j = j === 2 ? 9 : j - 1) {
-    d2 += +cnpj[i] * j;
-  }
-
-  d2 = 11 - (d2 % 11);
-  if (d2 >= 10) d2 = 0;
-
-  return d2 === +d[1];
-}
-    
-    // Envia cliente para API
-   async function enviarClienteParaAPI() {
-  const form = document.getElementById("popupCliente_form");
-  if (!form.checkValidity()) {
-    form.reportValidity();
-    return;
-  }
-
-  const email = document.getElementById("popupCliente_email").value.trim();
-  if (!email.includes("@")) {
-    alert("⚠️ Por favor, insira um e-mail válido.");
-    return;
-  }
-
-  const cnpjCpfRaw = document.getElementById("popupCliente_cnpjcpf").value.trim();
-  const cnpjCpf = limparNumero(cnpjCpfRaw);
-
-  const tipoDocumentoValido =
-    cnpjCpf.length === 11 ? validarCPF(cnpjCpf) : validarCNPJ(cnpjCpf);
-
-  if (!tipoDocumentoValido) {
-    alert("⚠️ CPF ou CNPJ inválido.");
-    return;
-  }
-
-  mostrarCarregando();
-
-  const cliente = {
-    codigo_cliente_integracao: gerarCodigoClienteIntegracao(),
-    razao_social: document.getElementById("popupCliente_razao").value.trim(),
-    nome_fantasia: document.getElementById("popupCliente_fantasia").value.trim(),
-    email,
-    cnpj_cpf: cnpjCpf,
-    estado: document.getElementById("popupCliente_estado").value.trim(),
-  };
-
-  try {
-    const resposta = await fetch("https://ulhoa-0a02024d350a.herokuapp.com/clientes/incluirCliente", {
-      method: "POST",
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(cliente),
-    });
-
-    const resultado = await resposta.json();
-
-    if (resposta.ok) {
-      bootstrap.Modal.getInstance(document.getElementById("popupClienteModal"))?.hide();
-
-      preencherCamposCliente({
-        nome_razao_social: cliente.razao_social,
-        codigoOmie: resultado?.codigo_cliente_omie || "",
-        cpfCnpj: cliente.cnpj_cpf,
-        nome_contato: cliente.nome_fantasia,
-        funcao: "",
-        telefone: ""
-      });
-
-      const mensagem = `Cliente ${cliente.razao_social} foi cadastrado com sucesso e está disponível para seleção.`;
-      ocultarCarregando();
-      mostrarPopupCustomizado("✅ Cliente incluído com sucesso!", mensagem, "success");
-        ocultarCarregando();
-    } else {
-      const erroMensagem = resultado?.message || "Erro inesperado ao incluir cliente.";
-mostrarPopupCustomizado("❌ Erro ao incluir cliente", erroMensagem, "danger");
-ocultarCarregando();
+      return resto === +cpf[10];
     }
-  } catch (err) {
-     const erroMensagem = resultado?.message || "Erro inesperado ao incluir cliente.";
-mostrarPopupCustomizado("❌ Erro ao incluir cliente", erroMensagem, "danger");
-ocultarCarregando();
-  }
-}
+
+    // Validação de CNPJ
+    function validarCNPJ(cnpj) {
+      cnpj = limparNumero(cnpj);
+      if (cnpj.length !== 14 || /^(\d)\1+$/.test(cnpj)) return false;
+
+      let t = cnpj.length - 2,
+        d = cnpj.substring(t),
+        d1 = 0,
+        d2 = 0;
+
+      for (let i = t - 1, j = 5; i >= 0; j = j === 2 ? 9 : j - 1) {
+        d1 += +cnpj[i] * j;
+      }
+
+      d1 = 11 - (d1 % 11);
+      if (d1 >= 10) d1 = 0;
+      if (d1 !== +d[0]) return false;
+
+      for (let i = t, j = 6; i >= 0; j = j === 2 ? 9 : j - 1) {
+        d2 += +cnpj[i] * j;
+      }
+
+      d2 = 11 - (d2 % 11);
+      if (d2 >= 10) d2 = 0;
+
+      return d2 === +d[1];
+    }
+
+    // Envia cliente para API
+    async function enviarClienteParaAPI() {
+      const form = document.getElementById("popupCliente_form");
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      const email = document.getElementById("popupCliente_email").value.trim();
+      if (!email.includes("@")) {
+        alert("⚠️ Por favor, insira um e-mail válido.");
+        return;
+      }
+
+      const cnpjCpfRaw = document.getElementById("popupCliente_cnpjcpf").value.trim();
+      const cnpjCpf = limparNumero(cnpjCpfRaw);
+
+      const tipoDocumentoValido =
+        cnpjCpf.length === 11 ? validarCPF(cnpjCpf) : validarCNPJ(cnpjCpf);
+
+      if (!tipoDocumentoValido) {
+        alert("⚠️ CPF ou CNPJ inválido.");
+        return;
+      }
+
+      mostrarCarregando();
+
+      const cliente = {
+        codigo_cliente_integracao: gerarCodigoClienteIntegracao(),
+        razao_social: document.getElementById("popupCliente_razao").value.trim(),
+        nome_fantasia: document.getElementById("popupCliente_fantasia").value.trim(),
+        email,
+        cnpj_cpf: cnpjCpf,
+        estado: document.getElementById("popupCliente_estado").value.trim(),
+      };
+
+      try {
+        const resposta = await fetch("https://ulhoa-0a02024d350a.herokuapp.com/clientes/incluirCliente", {
+          method: "POST",
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(cliente),
+        });
+
+        const resultado = await resposta.json();
+
+        if (resposta.ok) {
+          bootstrap.Modal.getInstance(document.getElementById("popupClienteModal"))?.hide();
+
+          preencherCamposCliente({
+            nome_razao_social: cliente.razao_social,
+            codigoOmie: resultado?.codigo_cliente_omie || "",
+            cpfCnpj: cliente.cnpj_cpf,
+            nome_contato: cliente.nome_fantasia,
+            funcao: "",
+            telefone: ""
+          });
+
+          const mensagem = `Cliente ${cliente.razao_social} foi cadastrado com sucesso e está disponível para seleção.`;
+          ocultarCarregando();
+          mostrarPopupCustomizado("✅ Cliente incluído com sucesso!", mensagem, "success");
+          ocultarCarregando();
+        } else {
+          const erroMensagem = resultado?.message || "Erro inesperado ao incluir cliente.";
+          mostrarPopupCustomizado("❌ Erro ao incluir cliente", erroMensagem, "danger");
+          ocultarCarregando();
+        }
+      } catch (err) {
+        const erroMensagem = resultado?.message || "Erro inesperado ao incluir cliente.";
+        mostrarPopupCustomizado("❌ Erro ao incluir cliente", erroMensagem, "danger");
+        ocultarCarregando();
+      }
+    }
     // Aplica máscara ao digitar
     document.addEventListener("input", function (e) {
       if (e.target.id === "popupCliente_cnpjcpf") {
@@ -648,7 +634,7 @@ ocultarCarregando();
       container.querySelector(".telefoneCliente").value = cliente.telefone || "";
     }
   </script>
- 
+
 
 </body>
 

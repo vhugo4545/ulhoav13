@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Painel Administrativo - Contadores e Atualização</title>
+  <style>
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      max-width: 520px;
+      margin: 40px auto;
+      padding: 24px;
+      background: linear-gradient(120deg, #f5f7fa 0%, #e9effd 100%);
+    }
+    h1 {
+      color: #114187;
+      text-align: center;
+      font-size: 2.1rem;
+      font-weight: 700;
+      margin-bottom: 24px;
+      letter-spacing: -1px;
+    }
+    .botoes-atu {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-bottom: 32px;
+    }
+    .botao-atualizar {
+      background: #114187;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 12px 20px;
+      font-weight: 600;
+      font-size: 1rem;
+      box-shadow: 0 1px 6px rgba(0,20,60,0.05);
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      position: relative;
+      overflow: hidden;
+    }
+    .botao-atualizar:active {
+      background: #0b305e;
+    }
+    .botao-atualizar.success {
+      background: #1db954;
+    }
+    .botao-atualizar.error {
+      background: #c0392b;
+    }
+    .msg-retorno {
+      text-align: center;
+      min-height: 28px;
+      font-size: 1rem;
+      margin-bottom: 18px;
+      color: #155724;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .msg-retorno.error {
+      color: #c0392b;
+    }
+    .painel-campos {
+      background: #fff;
+      border: 1px solid #d8e0ed;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(30,60,120,0.07);
+      padding: 22px 18px;
+      margin-top: 15px;
+    }
+    .campo {
+      margin-bottom: 30px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f0f4f9;
+    }
+    .campo:last-child {
+      margin-bottom: 0;
+      border-bottom: none;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #2c3e50;
+      font-size: 1.04rem;
+      letter-spacing: 0.01em;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 9px;
+      font-size: 1rem;
+      box-sizing: border-box;
+      border: 1px solid #c6d0e1;
+      border-radius: 4px;
+      margin-bottom: 2px;
+      background: #fafdff;
+      color: #114187;
+    }
+    button {
+      margin-top: 9px;
+      padding: 9px 18px;
+      background-color: #0d6efd;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background-color: #1853c0;
+    }
+    .valor-atual {
+      font-size: 0.98rem;
+      color: #444;
+      margin-top: 5px;
+      font-family: 'JetBrains Mono', monospace, monospace;
+      letter-spacing: 0.04em;
+    }
+    .barra-carregamento {
+      position: absolute;
+      left: 0; bottom: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #2994f0, #29a5e6, #114187 80%);
+      width: 0;
+      transition: width 0.2s;
+      z-index: 1;
+      pointer-events: none;
+    }
+    @media (max-width: 550px) {
+      body { max-width: 99vw; padding: 8px; }
+      .painel-campos { padding: 10px 5px; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Painel Administrativo</h1>
+
+  <div class="botoes-atu">
+    <button class="botao-atualizar" id="btn-atualizar-produtos">
+      🔄 Atualizar Produtos
+      <div class="barra-carregamento" id="barra-produtos"></div>
+    </button>
+    <button class="botao-atualizar" id="btn-atualizar-clientes">
+      🔄 Atualizar Clientes
+      <div class="barra-carregamento" id="barra-clientes"></div>
+    </button>
+  </div>
+  <div class="msg-retorno" id="retorno-atualizacao"></div>
+
+  <div class="painel-campos">
+    <div class="campo">
+      <label for="orcamentos">Orçamentos</label>
+      <input type="number" id="orcamentos" min="0" />
+      <div class="valor-atual" id="valor-orcamentos">Carregando...</div>
+      <button onclick="ajustar('orcamentos')">Salvar Orçamentos</button>
+    </div>
+
+    <div class="campo">
+      <label for="propostas">Propostas</label>
+      <input type="number" id="propostas" min="0" />
+      <div class="valor-atual" id="valor-propostas">Carregando...</div>
+      <button onclick="ajustar('propostas')">Salvar Propostas</button>
+    </div>
+  </div>
+
+  <script>
+    const BASE_URL = 'http://localhost:3000/contador';
+    const PROD_ATU_URL = "https://ulhoa-0a02024d350a.herokuapp.com/produtos/atualizar";
+    const CLIENTE_ATU_URL = "https://ulhoa-0a02024d350a.herokuapp.com/clientes/atualizar";
+    const retornoEl = document.getElementById("retorno-atualizacao");
+    const barraProdutos = document.getElementById("barra-produtos");
+    const barraClientes = document.getElementById("barra-clientes");
+
+    function formatarNumero(numero, digitos = 5) {
+      const num = Number(numero);
+      return isNaN(num) ? '00001' : String(num).padStart(digitos, '0');
+    }
+
+    async function carregarValores() {
+      for (const nome of ['orcamentos', 'propostas']) {
+        try {
+          const res = await fetch(`${BASE_URL}/valor/${nome}`);
+          if (!res.ok) throw new Error(`Erro HTTP: ${res.status}`);
+
+          const data = await res.json();
+          const valor = Number(data.valorAtual) || 1;
+
+          document.getElementById(nome).value = valor;
+          document.getElementById(`valor-${nome}`).innerText = `Valor atual: ${formatarNumero(valor)}`;
+        } catch (err) {
+          console.error(`❌ Erro ao carregar contador '${nome}':`, err);
+          document.getElementById(`valor-${nome}`).innerText = "❌ Erro ao carregar valor atual";
+        }
+      }
+    }
+
+    async function ajustar(nome) {
+      const input = document.getElementById(nome);
+      const novoValor = Number(input.value);
+
+      if (isNaN(novoValor) || novoValor < 0) {
+        alert("❌ Digite um número válido e positivo.");
+        return;
+      }
+
+      try {
+        const res = await fetch(`${BASE_URL}/definir/${nome}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ novoValor })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          console.error("❌ Erro ao salvar:", data);
+          alert(`❌ Erro ao salvar: ${data.erro || 'Resposta inválida'}`);
+          return;
+        }
+
+        if (data.valorDefinido === undefined) {
+          console.warn("⚠️ Resposta sem 'valorDefinido':", data);
+          alert("⚠️ Valor ajustado não foi retornado corretamente.");
+        } else {
+          alert(`✅ Novo valor de ${nome}: ${formatarNumero(data.valorDefinido)}`);
+        }
+        carregarValores();
+      } catch (err) {
+        console.error("❌ Erro de conexão:", err);
+        alert("❌ Erro de conexão com o servidor.");
+      }
+    }
+
+    // Barra animada de carregamento (2 minutos)
+    function iniciarBarra(barra) {
+      barra.style.width = "0";
+      barra.style.display = "block";
+      let inicio = Date.now();
+      const duracao = 2 * 60 * 1000; // 2 minutos em ms
+
+      function atualizar() {
+        let decorrido = Date.now() - inicio;
+        let progresso = Math.min(decorrido / duracao, 1);
+        barra.style.width = `${progresso * 100}%`;
+        if (progresso < 1) {
+          barra._timeout = setTimeout(atualizar, 150);
+        }
+      }
+      atualizar();
+    }
+
+    function encerrarBarra(barra) {
+      barra.style.width = "100%";
+      setTimeout(() => {
+        barra.style.width = "0";
+        barra.style.display = "none";
+      }, 900);
+      if (barra._timeout) clearTimeout(barra._timeout);
+    }
+
+    // Função para atualizar produtos ou clientes
+    async function atualizarDados(tipo) {
+      let url, texto, metodo = "POST", barra;
+      if (tipo === "produtos") {
+        url = PROD_ATU_URL;
+        texto = "produtos";
+        metodo = "POST";
+        barra = barraProdutos;
+      } else {
+        url = CLIENTE_ATU_URL;
+        texto = "clientes";
+        metodo = "GET";
+        barra = barraClientes;
+      }
+      const botao = document.getElementById(
+        tipo === "produtos" ? "btn-atualizar-produtos" : "btn-atualizar-clientes"
+      );
+      botao.disabled = true;
+      retornoEl.textContent = `Atualizando ${texto}...`;
+      retornoEl.classList.remove("error");
+      botao.classList.remove("success", "error");
+      iniciarBarra(barra);
+
+      let terminou = false;
+      let timeoutFinal = setTimeout(() => {
+        if (!terminou) {
+          retornoEl.textContent = `⏳ Aguardando resposta... Processo pode demorar até 2 minutos.`;
+        }
+      }, 11000);
+
+      try {
+        const res = await fetch(url, { method: metodo });
+        const data = await res.json();
+        terminou = true;
+        clearTimeout(timeoutFinal);
+        encerrarBarra(barra);
+        if (res.ok) {
+          botao.classList.add("success");
+          retornoEl.textContent = `✅ ${texto.charAt(0).toUpperCase() + texto.slice(1)} atualizados com sucesso!`;
+        } else {
+          botao.classList.add("error");
+          retornoEl.textContent = `❌ Erro ao atualizar ${texto}: ${data.erro || "Erro desconhecido"}`;
+          retornoEl.classList.add("error");
+        }
+      } catch (err) {
+        terminou = true;
+        clearTimeout(timeoutFinal);
+        encerrarBarra(barra);
+        botao.classList.add("error");
+        retornoEl.textContent = `❌ Erro de conexão ao atualizar ${texto}`;
+        retornoEl.classList.add("error");
+      } finally {
+        botao.disabled = false;
+        setTimeout(() => {
+          retornoEl.textContent = "";
+          botao.classList.remove("success", "error");
+        }, 3300);
+      }
+    }
+
+    document.getElementById("btn-atualizar-produtos")
+      .addEventListener("click", () => atualizarDados("produtos"));
+    document.getElementById("btn-atualizar-clientes")
+      .addEventListener("click", () => atualizarDados("clientes"));
+
+    carregarValores();
+  </script>
+</body>
+</html>

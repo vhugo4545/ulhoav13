@@ -113,25 +113,31 @@ function renderLista(filtro = "") {
   const tr = document.createElement("tr");
   tr.dataset.idSuffix = ultimoBloco.id;
 
-  tr.innerHTML = `
-    <td>${item.utilizacao || ""}</td>
-    <td>${item.nome_produto || item.nome || ""}</td>
-    <td class="custo-unitario">R$ ${valorTotal.toFixed(2)}</td>
-    <td class="venda-unitaria">R$ ${custoUnitario.toFixed(2)}</td>
-    <td>${item.codigo_omie || ""}</td>
-    <td>
-      <input type="number" class="form-control form-control-sm quantidade"
-             value="${quantidadeArredondada}" min="1">
-    </td>
-    <td>
-      <input type="text" class="form-control form-control-sm quantidade-desejada"
-             value="${(quantidadeCalculada )}"
-             data-formula="${item.formula_quantidade || ""}">
-    </td>
-    <td>
-      <button class="btn btn-sm btn-danger d-block mb-1" onclick="this.closest('tr').remove()">Remover</button>
-      <button class="btn btn-sm btn-secondary d-block" onclick="abrirSubstituirProduto(this)">Substituir</button>
-    </td>`;
+ tr.innerHTML = `
+ <td>
+  <textarea class="form-control form-control-sm" rows="3">
+${item.descricao_utilizacao|| "Utilização Barra de pesquisa"}
+  </textarea>
+</td>
+
+
+  <td>${item.nome_produto || item.nome || ""}</td>
+  <td class="custo-unitario">R$ ${valorTotal.toFixed(2)}</td>
+  <td class="venda-unitaria">R$ ${custoUnitario.toFixed(2)}</td>
+  <td>${item.codigo_omie || ""}</td>
+  <td>
+    <input type="number" class="form-control form-control-sm quantidade"
+           value="${quantidadeArredondada}" min="1">
+  </td>
+  <td>
+    <input type="text" class="form-control form-control-sm quantidade-desejada"
+           value="${quantidadeCalculada}"
+           data-formula="${item.formula_quantidade || ""}">
+  </td>
+  <td>
+    <button class="btn btn-sm btn-danger d-block mb-1" onclick="this.closest('tr').remove()">Remover</button>
+    <button class="btn btn-sm btn-secondary d-block" onclick="abrirSubstituirProduto(this)">Substituir</button>
+  </td>`;
 
   tabela.appendChild(tr);
   total += valorTotal;
@@ -273,7 +279,7 @@ async function atualizarPrecosOmieNaDOM() {
         mostrarPopupCustomizado("✅ Preços Atualizados", mensagem, "success");
         
         mostrarPopupCustomizado("⚠️ Ajustes Realizados", "Os preços foram atualizados com a Omie. Por conta disso, os campos de desconto e parcelas foram resetados para garantir consistência nos valores.", "warning");
-
+        ativarEventosDescricao()
       } else {
         alert("✔️ Todos os preços já estavam atualizados.");
       }
@@ -286,6 +292,22 @@ async function atualizarPrecosOmieNaDOM() {
     }
   }
 }
+
+function ativarEventosDescricao() {
+  setTimeout(() => {
+    console.log("Campos Ajustados")
+    const campos = document.querySelectorAll('input[name="descricao"]');
+
+    campos.forEach(campo => {
+      campo.dispatchEvent(new Event('focus',  { bubbles: true }));
+      campo.dispatchEvent(new Event('input',  { bubbles: true }));
+      campo.dispatchEvent(new Event('change', { bubbles: true }));
+      campo.dispatchEvent(new Event('blur',   { bubbles: true }));
+    });
+  }, 2000); // 2 segundos de espera
+}
+
+
 
 function forcarEventosDescricao(input) {
   if (!input) return;

@@ -312,7 +312,12 @@ if (campo2) {
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${item.utilizacao || ""}</td>
+ <td>
+  <textarea class="form-control form-control-sm" rows="3">
+${item.descricao_utilizacao|| "Utilização Preencher"}
+  </textarea>
+</td>
+
           <td>${item.nome_produto || ""}</td>
           <td class="custo-unitario">R$ ${parseFloat(item.custo || 0).toFixed(2)}</td>
           <td class="venda-unitaria">R$ ${parseFloat(item.preco || 0).toFixed(2)}</td>

@@ -142,7 +142,12 @@ const nomesUnicos = new Set();
               tr.dataset.idSuffix = ultimoBloco.id;
 
               tr.innerHTML = `
-                <td>${item.utilizacao || ""}</td>
+ <td>
+  <textarea class="form-control form-control-sm" rows="3">
+${item.descricao_utilizacao|| "Utilização (Modelo)"}
+  </textarea>
+</td>
+
                 <td>${item.nome_produto || item.nome || ""}</td>
                 <td class="custo-unitario">R$ ${valorTotal.toFixed(2)}</td>
                 <td class="venda-unitaria">R$ ${custoUnitario.toFixed(2)}</td>

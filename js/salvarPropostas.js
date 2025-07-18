@@ -33,25 +33,44 @@ async function salvarPropostaEditavel() {
 const select = document.getElementById("vendedorResponsavel");
 const textoSelecionado = select?.options[select.selectedIndex]?.text || "";
     // 📋 Campos do formulário
-    const camposFormulario = {
-      numeroOrcamento: document.getElementById("numeroOrcamento")?.value || "",
-      dataOrcamento: document.getElementById("dataOrcamento")?.value || "",
-      origemCliente: document.getElementById("origemCliente")?.value || "",
-      clientes,
-      cep: document.getElementById("cep")?.value || "",
-      rua: document.getElementById("rua")?.value || "",
-      numero: document.getElementById("numero")?.value || "",
-      complemento: document.getElementById("complemento")?.value || "",
-      bairro: document.getElementById("bairro")?.value || "",
-      cidade: document.getElementById("cidade")?.value || "",
-      estado: document.getElementById("estado")?.value || "",
-      vendedorResponsavel: textoSelecionado,
-      operadorInterno: document.getElementById("operadorInterno")?.value || "",
-      prazosArea: document.getElementById("prazosArea")?.value || "",
-      condicaoPagamento,
-      condicoesGerais: document.getElementById("condicoesGerais")?.value || "",
-      parcelas
-    };
+ // Função para buscar e preencher o próximo número do orçamento (incrementando o contador)
+async function preencherNumeroOrcamento() {
+  try {
+    const res = await fetch('http://localhost:3000/contador/somar/orcamentos', { method: 'POST' });
+    const data = await res.json();
+    const numFormatado = String(data.novoValor).padStart(5, '0');
+    document.getElementById('numeroOrcamento').value = numFormatado;
+    return numFormatado;
+  } catch (err) {
+    alert('Erro ao buscar número do orçamento!');
+    document.getElementById('numeroOrcamento').value = 'ERRO';
+    return '';
+  }
+}
+
+// --- Exemplo de uso: chamar antes de criar o objeto camposFormulario ---
+// (Se estiver dentro de uma função async!)
+const numeroOrcamento = await preencherNumeroOrcamento();
+
+const camposFormulario = {
+  numeroOrcamento: numeroOrcamento, // já vem preenchido do backend
+  dataOrcamento: document.getElementById("dataOrcamento")?.value || "",
+  origemCliente: document.getElementById("origemCliente")?.value || "",
+  clientes,
+  cep: document.getElementById("cep")?.value || "",
+  rua: document.getElementById("rua")?.value || "",
+  numero: document.getElementById("numero")?.value || "",
+  complemento: document.getElementById("complemento")?.value || "",
+  bairro: document.getElementById("bairro")?.value || "",
+  cidade: document.getElementById("cidade")?.value || "",
+  estado: document.getElementById("estado")?.value || "",
+  vendedorResponsavel: textoSelecionado,
+  operadorInterno: document.getElementById("operadorInterno")?.value || "",
+  prazosArea: document.getElementById("prazosArea")?.value || "",
+  condicaoPagamento,
+  condicoesGerais: document.getElementById("condicoesGerais")?.value || "",
+  parcelas
+};
 
     // 🔄 Grupos e produtos
     const grupos = [];
@@ -66,34 +85,45 @@ const textoSelecionado = select?.options[select.selectedIndex]?.text || "";
         return;
       }
 
-      const itens = [];
-      tabela.querySelectorAll("tbody tr:not(.extra-summary-row)").forEach(tr => {
-        const nome_produto = tr.querySelector("td:nth-child(2)")?.textContent?.trim() || "";
-        const custoStr = tr.querySelector("td:nth-child(3)")?.textContent?.replace("R$", "").replace(/\s/g, "") || "0";
-        const precoStr = tr.querySelector("td:nth-child(4)")?.textContent?.replace("R$", "").replace(/\s/g, "") || "0";
-        const custo = parseFloat(custoStr.replace(",", ".")) || 0;
-        const preco = parseFloat(precoStr.replace(",", ".")) || 0;
-        const codigo_omie = tr.querySelector("td:nth-child(5)")?.textContent?.trim() || "";
-        const quantidade = tr.querySelector("input.quantidade")?.value || "";
-        const inputQtdDesejada = tr.querySelector("input.quantidade-desejada");
-        const quantidade_desejada = inputQtdDesejada?.value || "";
-        const formula_quantidade = inputQtdDesejada?.dataset.formula || "";
+     const itens = [];
 
-        const formula_custo = tr.querySelector("td:nth-child(3)")?.dataset.formula || "";
-        const formula_preco = tr.querySelector("td:nth-child(4)")?.dataset.formula || "";
+tabela.querySelectorAll("tbody tr:not(.extra-summary-row)").forEach(tr => {
+  // Captura correta do campo "Utilização" como descricao_utilizacao
+  const utilizacaoEl = tr.querySelector("td:nth-child(1) input, td:nth-child(1) textarea");
+  const descricao_utilizacao = utilizacaoEl?.value?.trim() || "";
 
-        itens.push({
-          nome_produto,
-          custo,
-          preco,
-          codigo_omie,
-          quantidade,
-          quantidade_desejada,
-          formula_quantidade,
-          formula_custo,
-          formula_preco
-        });
-      });
+  const nome_produto = tr.querySelector("td:nth-child(2)")?.textContent?.trim() || "";
+
+  const custoStr = tr.querySelector("td:nth-child(3)")?.textContent?.replace("R$", "").replace(/\s/g, "") || "0";
+  const precoStr = tr.querySelector("td:nth-child(4)")?.textContent?.replace("R$", "").replace(/\s/g, "") || "0";
+
+  const custo = parseFloat(custoStr.replace(",", ".")) || 0;
+  const preco = parseFloat(precoStr.replace(",", ".")) || 0;
+
+  const codigo_omie = tr.querySelector("td:nth-child(5)")?.textContent?.trim() || "";
+  const quantidade = parseFloat(tr.querySelector("input.quantidade")?.value || "0");
+  const inputQtdDesejada = tr.querySelector("input.quantidade-desejada");
+
+  const quantidade_desejada = parseFloat(inputQtdDesejada?.value || "0");
+  const formula_quantidade = inputQtdDesejada?.dataset.formula || "";
+
+  const formula_custo = tr.querySelector("td:nth-child(3)")?.dataset.formula || "";
+  const formula_preco = tr.querySelector("td:nth-child(4)")?.dataset.formula || "";
+
+  itens.push({
+    descricao_utilizacao,
+    nome_produto,
+    custo,
+    preco,
+    codigo_omie,
+    quantidade,
+    quantidade_desejada,
+    formula_quantidade,
+    formula_custo,
+    formula_preco
+  });
+});
+
 
       // 📐 Parâmetros dos popups (miudezas, margem, etc.)
       const parametros = {};
@@ -250,33 +280,45 @@ async function atualizarPropostaEditavel() {
         return;
       }
 
-      const itens = [];
-      tabela.querySelectorAll("tbody tr:not(.extra-summary-row)").forEach(tr => {
-        const nome_produto = tr.querySelector("td:nth-child(2)")?.textContent?.trim() || "";
-        const custoStr = tr.querySelector("td:nth-child(3)")?.textContent?.replace("R$", "").replace(/\s/g, "") || "0";
-        const precoStr = tr.querySelector("td:nth-child(4)")?.textContent?.replace("R$", "").replace(/\s/g, "") || "0";
-        const custo = parseFloat(custoStr.replace(",", ".")) || 0;
-        const preco = parseFloat(precoStr.replace(",", ".")) || 0;
-        const codigo_omie = tr.querySelector("td:nth-child(5)")?.textContent?.trim() || "";
-        const quantidade = tr.querySelector("input.quantidade")?.value || "";
-        const inputQtdDesejada = tr.querySelector("input.quantidade-desejada");
-        const quantidade_desejada = inputQtdDesejada?.value || "";
-        const formula_quantidade = inputQtdDesejada?.dataset.formula || "";
-        const formula_custo = tr.querySelector("td:nth-child(3)")?.dataset.formula || "";
-        const formula_preco = tr.querySelector("td:nth-child(4)")?.dataset.formula || "";
+         const itens = [];
 
-        itens.push({
-          nome_produto,
-          custo,
-          preco,
-          codigo_omie,
-          quantidade,
-          quantidade_desejada,
-          formula_quantidade,
-          formula_custo,
-          formula_preco
-        });
-      });
+tabela.querySelectorAll("tbody tr:not(.extra-summary-row)").forEach(tr => {
+  // Captura correta do campo "Utilização" como descricao_utilizacao
+  const utilizacaoEl = tr.querySelector("td:nth-child(1) input, td:nth-child(1) textarea");
+  const descricao_utilizacao = utilizacaoEl?.value?.trim() || "";
+
+  const nome_produto = tr.querySelector("td:nth-child(2)")?.textContent?.trim() || "";
+
+  const custoStr = tr.querySelector("td:nth-child(3)")?.textContent?.replace("R$", "").replace(/\s/g, "") || "0";
+  const precoStr = tr.querySelector("td:nth-child(4)")?.textContent?.replace("R$", "").replace(/\s/g, "") || "0";
+
+  const custo = parseFloat(custoStr.replace(",", ".")) || 0;
+  const preco = parseFloat(precoStr.replace(",", ".")) || 0;
+
+  const codigo_omie = tr.querySelector("td:nth-child(5)")?.textContent?.trim() || "";
+  const quantidade = parseFloat(tr.querySelector("input.quantidade")?.value || "0");
+  const inputQtdDesejada = tr.querySelector("input.quantidade-desejada");
+
+  const quantidade_desejada = parseFloat(inputQtdDesejada?.value || "0");
+  const formula_quantidade = inputQtdDesejada?.dataset.formula || "";
+
+  const formula_custo = tr.querySelector("td:nth-child(3)")?.dataset.formula || "";
+  const formula_preco = tr.querySelector("td:nth-child(4)")?.dataset.formula || "";
+
+  itens.push({
+    descricao_utilizacao,
+    nome_produto,
+    custo,
+    preco,
+    codigo_omie,
+    quantidade,
+    quantidade_desejada,
+    formula_quantidade,
+    formula_custo,
+    formula_preco
+  });
+});
+
 
       const parametros = {};
       bloco.querySelectorAll(".tab-pane input[name]").forEach(input => {

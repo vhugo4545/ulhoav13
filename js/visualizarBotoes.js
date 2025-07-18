@@ -4,13 +4,17 @@ async function controlarBotoesSidebar() {
 
   const botoes = {
     criar: document.getElementById("btn-criar"),
-    editar: document.getElementById("btn-editar"),
+    editarModelo: document.getElementById("btn-editar-modelo"),
+    atualizar: document.getElementById("btn-atualizar"),
     solicitar: document.getElementById("btn-solicitar"),
     autorizar: document.getElementById("btn-autorizar"),
-    enviar: document.getElementById("btn-enviar"), // botão com gerarOrcamentoParaImpressao()
+    enviarCliente: document.getElementById("btn-enviar-cliente"),
+    aprovadoCliente: document.getElementById("btn-aprovado-cliente"),
     gerarPedido: document.getElementById("btn-gerar-pedido"),
-    auditar: document.getElementById("btn-auditar-valores") // <- novo botão
+    atualizarPrecos: document.getElementById("btn-atualizar-precos"),
+    auditar: document.getElementById("btn-auditar-valores")
   };
+
 
   function esconderTodos() {
     Object.values(botoes).forEach(btn => btn && (btn.style.display = "none"));

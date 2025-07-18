@@ -83,9 +83,9 @@ body {
 
 .sidebar-button {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+    align-items: center;         /* Alinha ícone e texto verticalmente */
+    justify-content: center;     /* Centraliza horizontalmente */
+    gap: 8px;                    /* Espaçamento entre ícone e texto */
     background: white;
     color: #343a40;
     border: none;
@@ -94,7 +94,12 @@ body {
     font-size: 14px;
     font-weight: bold;
     cursor: pointer;
+    text-decoration: none;       /* Remove sublinhado se for <a> */
     transition: background 0.3s ease, transform 0.2s ease;
+}
+.sidebar-button:hover {
+    background: #f0f0f0;
+    transform: translateY(-2px);
 }
 
 .sidebar-button:hover {

@@ -26,6 +26,16 @@
       <button id="save-proposal" class="sidebar-button" onclick="irParaPagina('criar.html')">
         <span class="material-icons-outlined">save</span> Criar Proposta
       </button>
+      
+  <button id="btn-editar-modelo" class="sidebar-button" onclick="redirecionarParaEdicao()">
+    <span class="material-icons-outlined">edit_note</span><br>  Editar Modelo
+  </button>
+
+ <a id="btn-editar-formulas" href="modelo.html" class="sidebar-button" style="text-decoration: none; flex-direction: column;">
+  <span class="material-icons-outlined">functions</span>
+  Editar Fórmulas
+</a>
+
     </div>
   </aside>
 
@@ -101,7 +111,12 @@
   </div>
 </div>
 
-
+  <script>
+  function redirecionarParaEdicao() {
+    const id = new URLSearchParams(location.search).get("id");
+    window.location.href = "editar.html?id=" + "6851c413b30e3e4dda354132";
+  }
+</script>
   </main>
     <script src="../js/validarToken.js" defer></script>
    <script src="../js/carregamento.js" defer></script>

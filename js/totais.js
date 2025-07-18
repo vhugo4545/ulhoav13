@@ -85,20 +85,57 @@ function somarValores(lista) {
 }
 
 // Gera HTML do totalizador por ambiente
+// Gera HTML do totalizador por ambiente, mostrando também a porcentagem em relação ao Valor Mínimo
 function gerarHtmlTotalizador(nomeAmbiente, valores) {
-    
+  // Evita divisão por zero
+  const base = Number(valores.campoValorMinimo) || 1;
+
+  // Função auxiliar para calcular porcentagem e formatar
+  function porcentagem(valor) {
+    return `${((Number(valor) / base) * 100).toFixed(1)}%`;
+  }
+
   return `
     <div class="row text-center gx-4 gy-3">
-      <div class="col"><div class="text-muted small">Gastos Operacionais</div><div class="fw-bold">R$ ${valores.campoValorGastosOperacionais.toFixed(2)}</div></div>
-      <div class="col"><div class="text-muted small">Margem de Lucro</div><div class="fw-bold">R$ ${valores.campoValorMargemLucro.toFixed(2)}</div></div>
-      <div class="col"><div class="text-muted small">Impostos</div><div class="fw-bold">R$ ${valores.campoValorImpostos.toFixed(2)}</div></div>
-      <div class="col"><div class="text-muted small">Valor Mínimo</div><div class="fw-bold">R$ ${valores.campoValorMinimo.toFixed(2)}</div></div>
-      <div class="col"><div class="text-muted small">Margem + Comissão</div><div class="fw-bold">R$ ${valores.campoVAlorSegurancaDesperdicio.toFixed(2)}</div></div>
-      <div class="col"><div class="text-muted small">Miudezas</div><div class="fw-bold">R$ ${valores.campoValorMiudezas.toFixed(2)}</div></div>
-      <div class="col"><div class="text-muted small">Valor Sugerido</div><div class="fw-bold">R$ ${valores.campoValorFinal.toFixed(2)}</div></div>
+      <div class="col">
+        <div class="text-muted small">Gastos Operacionais</div>
+        <div class="fw-bold">R$ ${valores.campoValorGastosOperacionais.toFixed(2)}</div>
+        <div class="text-secondary small">${porcentagem(valores.campoValorGastosOperacionais)}</div>
+      </div>
+      <div class="col">
+        <div class="text-muted small">Margem de Lucro</div>
+        <div class="fw-bold">R$ ${valores.campoValorMargemLucro.toFixed(2)}</div>
+        <div class="text-secondary small">${porcentagem(valores.campoValorMargemLucro)}</div>
+      </div>
+      <div class="col">
+        <div class="text-muted small">Impostos</div>
+        <div class="fw-bold">R$ ${valores.campoValorImpostos.toFixed(2)}</div>
+        <div class="text-secondary small">${porcentagem(valores.campoValorImpostos)}</div>
+      </div>
+      <div class="col">
+        <div class="text-muted small">Valor Mínimo</div>
+        <div class="fw-bold">R$ ${valores.campoValorMinimo.toFixed(2)}</div>
+        <div class="text-secondary small">100%</div>
+      </div>
+      <div class="col">
+        <div class="text-muted small">Margem + Comissão</div>
+        <div class="fw-bold">R$ ${valores.campoVAlorSegurancaDesperdicio.toFixed(2)}</div>
+        <div class="text-secondary small">${porcentagem(valores.campoVAlorSegurancaDesperdicio)}</div>
+      </div>
+      <div class="col">
+        <div class="text-muted small">Miudezas</div>
+        <div class="fw-bold">R$ ${valores.campoValorMiudezas.toFixed(2)}</div>
+        <div class="text-secondary small">${porcentagem(valores.campoValorMiudezas)}</div>
+      </div>
+      <div class="col">
+        <div class="text-muted small">Valor Sugerido</div>
+        <div class="fw-bold">R$ ${valores.campoValorFinal.toFixed(2)}</div>
+        <div class="text-secondary small">${porcentagem(valores.campoValorFinal)}</div>
+      </div>
     </div>
   `;
 }
+
 
 function adicionarTotalizadoresPorAmbienteComAgrupamento() {
   const blocos = document.querySelectorAll("[id^='bloco-']");

@@ -37,9 +37,7 @@ function gerarOrcamentoParaImpressaoCompleta() {
     emailOrigem: getValue("emailOrigem"),
     comissao: getValue("comissaoArquiteto"),
     operador: getValue("operadorInterno"),
-    enderecoObra: `${getValue("rua")}, ${getValue("numero")}, ${getValue("bairro")} - ${getValue("complemento")} - ${getValue("cidade")}/${getValue("estado")} - CEP: ${getValue("cep")}`,
-    contatoResponsavel: document.querySelector(".telefoneCliente")?.value || "-",
-    prazos: getValue("prazosArea"),
+    enderecoObra: `Rua/Avenida: ${getValue("rua")}, Número: ${getValue("numero")}, Bairro: ${getValue("bairro")} - Complemento: ${getValue("complemento")} - Cidade: ${getValue("cidade")}/${getValue("estado")} - CEP: ${getValue("cep")}`,  prazos: getValue("prazosArea"),
    condicao: document.getElementById("condicaoPagamento")?.selectedOptions[0]?.textContent.trim() || "-",
 
     condicoesGerais: getValue("condicoesGerais"),
@@ -84,7 +82,7 @@ function gerarOrcamentoParaImpressaoCompleta() {
               <td>${descricao}</td>
               <td>${qtd}</td>
             </tr>
-            ${resumoGrupo ? `<tr><td colspan="2"><em>Resumo do Grupo: ${resumoGrupo}</em></td></tr>` : ""}
+            ${resumoGrupo ? `<tr><td colspan="2"><em> ${resumoGrupo}</em></td></tr>` : ""}
           </tbody>
         </table>
         <div class="border p-2 text-end fw-bold bg-light">Total do Ambiente: R$ ${totalGrupo.toFixed(2).replace('.', ',')}</div>
@@ -109,12 +107,18 @@ function gerarOrcamentoParaImpressaoCompleta() {
       <div class="fw-bold">Total Geral: R$ ${totalGeral.toFixed(2).replace('.', ',')}</div>
     </div>`;
 
-  corpoHTML += `
-    <div class="border p-2 mt-3">
-      <strong>Prazo:</strong><br>${dados.prazos}<br><br>
-      <strong>Condições de Pagamento:</strong><br>${dados.condicao}<br><br>
-      <strong>Condições Gerais:</strong><br>${dados.condicoesGerais}
-    </div>`;
+  const condicoesGeraisFormatada = (dados.condicoesGerais || "")
+  .replace(/•/g, "<br>•");
+
+corpoHTML += `
+  <div class="border p-2 mt-3">
+    <strong>Prazo:</strong><br>${dados.prazos}<br><br>
+    <strong>Condições de Pagamento:</strong><br>${dados.condicao}<br><br>
+    <strong>Condições Gerais:</strong><br>${condicoesGeraisFormatada}
+    <br>
+  </div>
+`;
+
 
   const htmlCompleto = `
     <html>
@@ -131,7 +135,7 @@ function gerarOrcamentoParaImpressaoCompleta() {
           <table class="table table-bordered table-sm w-100">
             <tr>
               <td style="width:40%;text-align:center;vertical-align:middle;">
-                <img src="/js/logo.jpg" style="max-height:65px;"><br><br>
+                <img src="../js/logo.jpg" style="max-height:65px;"><br><br>
                 CNPJ: 02.836.048/0001-60 <br>(31) (31) 3332- 0616 / (31) 3271-9449<br>
               </td>
               <td style="width:40%;">

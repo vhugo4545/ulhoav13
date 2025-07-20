@@ -7,9 +7,6 @@ function slugify(text) {
 
 // Calcula valores financeiros a partir dos dados do bloco
 function calcularValoresFinanceirosDiretoDaTabela(blocoId) {
-   
-   
-   
   const bloco = document.getElementById(blocoId);
   if (!bloco) return null;
 
@@ -20,6 +17,14 @@ function calcularValoresFinanceirosDiretoDaTabela(blocoId) {
     return parseFloat(valor) / 100 || 0;
   };
 
+  // Busca o valor do custo total de material diretamente (valor em reais)
+  const buscarCustoMaterial = () => {
+    const input = bloco.querySelector(`input[name='custoTotalMaterial']`);
+    if (!input) return 0;
+    const valor = input.value.trim().replace(',', '.').replace('R$', '');
+    return parseFloat(valor) || 0;
+  };
+
   const impostos = buscarValorDoInput("impostos");
   const margemLucro = buscarValorDoInput("margem_lucro");
   const gastosTotais = buscarValorDoInput("gasto_operacional");
@@ -27,6 +32,9 @@ function calcularValoresFinanceirosDiretoDaTabela(blocoId) {
   const miudezas = buscarValorDoInput("miudezas");
   const comissaoArquiteta = buscarValorDoInput("comissao_arquiteta");
   const margemSeguranca = buscarValorDoInput("margem_seguranca");
+
+  // Novo campo: custo total de material
+  const custoTotalMaterial = buscarCustoMaterial();
 
   const tabela = bloco.querySelector("table");
   if (!tabela) return null;
@@ -60,11 +68,15 @@ function calcularValoresFinanceirosDiretoDaTabela(blocoId) {
     campoVAlorSegurancaDesperdicio,
     campoValorMiudezas,
     campoNegociacao,
-    campoValorFinal: precoSugerido
+    campoValorFinal: precoSugerido,
+    comissao_arquiteta: comissaoArquiteta * precoMinimo, // valor em reais!
+    custoTotalMaterial // valor em reais, direto do input
   };
 }
 
+
 // Soma listas de valores por campo
+// Soma listas de valores por campo, incluindo comissão do arquiteto
 function somarValores(lista) {
   const total = {
     campoValorGastosOperacionais: 0,
@@ -74,18 +86,18 @@ function somarValores(lista) {
     campoVAlorSegurancaDesperdicio: 0,
     campoValorMiudezas: 0,
     campoNegociacao: 0,
-    campoValorFinal: 0
+    campoValorFinal: 0,
+    comissao_arquiteta: 0,
+    custoTotalMaterial: 0 // <--- adicionado aqui!
   };
   lista.forEach(v => {
     for (const chave in total) {
-      total[chave] += v[chave] || 0;
+      total[chave] += Number(v[chave]) || 0;
     }
   });
   return total;
 }
 
-// Gera HTML do totalizador por ambiente
-// Gera HTML do totalizador por ambiente, mostrando também a porcentagem em relação ao Valor Mínimo
 function gerarHtmlTotalizador(nomeAmbiente, valores) {
   // Evita divisão por zero
   const base = Number(valores.campoValorMinimo) || 1;
@@ -94,6 +106,10 @@ function gerarHtmlTotalizador(nomeAmbiente, valores) {
   function porcentagem(valor) {
     return `${((Number(valor) / base) * 100).toFixed(1)}%`;
   }
+
+  // Garantir que o valor de comissão seja um número
+  const comissaoArquiteta = Number(valores.comissao_arquiteta) || 0;
+  const custoTotalMaterial = Number(valores.custoTotalMaterial) || 0;
 
   return `
     <div class="row text-center gx-4 gy-3">
@@ -108,19 +124,24 @@ function gerarHtmlTotalizador(nomeAmbiente, valores) {
         <div class="text-secondary small">${porcentagem(valores.campoValorMargemLucro)}</div>
       </div>
       <div class="col">
+        <div class="text-muted small">Comissão Arquiteta</div>
+        <div class="fw-bold">R$ ${comissaoArquiteta.toFixed(2)}</div>
+        <div class="text-secondary small">${porcentagem(comissaoArquiteta)}</div>
+      </div>
+      <div class="col">
         <div class="text-muted small">Impostos</div>
         <div class="fw-bold">R$ ${valores.campoValorImpostos.toFixed(2)}</div>
         <div class="text-secondary small">${porcentagem(valores.campoValorImpostos)}</div>
       </div>
       <div class="col">
+        <div class="text-muted small">Custo Total de Material</div>
+        <div class="fw-bold">R$ ${custoTotalMaterial.toFixed(2)}</div>
+        <div class="text-secondary small">–</div>
+      </div>
+      <div class="col">
         <div class="text-muted small">Valor Mínimo</div>
         <div class="fw-bold">R$ ${valores.campoValorMinimo.toFixed(2)}</div>
         <div class="text-secondary small">100%</div>
-      </div>
-      <div class="col">
-        <div class="text-muted small">Margem + Comissão</div>
-        <div class="fw-bold">R$ ${valores.campoVAlorSegurancaDesperdicio.toFixed(2)}</div>
-        <div class="text-secondary small">${porcentagem(valores.campoVAlorSegurancaDesperdicio)}</div>
       </div>
       <div class="col">
         <div class="text-muted small">Miudezas</div>
@@ -134,7 +155,10 @@ function gerarHtmlTotalizador(nomeAmbiente, valores) {
       </div>
     </div>
   `;
+ 
 }
+
+
 
 
 function adicionarTotalizadoresPorAmbienteComAgrupamento() {
@@ -156,6 +180,7 @@ function adicionarTotalizadoresPorAmbienteComAgrupamento() {
     const div = document.createElement("div");
     div.className = "resumo-totalizador mt-4 p-4 border-top";
     div.innerHTML = gerarHtmlTotalizador(nomeAmbiente, valores);
+
     bloco.appendChild(div);
   });
 

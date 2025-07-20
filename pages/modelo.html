@@ -367,6 +367,23 @@
     ocultarCarregando();
   }
 }
+// Aplica proteção de clique duplo em todos os botões com a classe .sidebar-button
+// Aplica proteção de clique duplo em todos os botões com a classe .sidebar-button
+document.querySelectorAll('.sidebar-button').forEach(btn => {
+  btn.addEventListener('click', function(evt) {
+    if (btn.disabled) {
+      console.warn('Clique duplo detectado e bloqueado em:', btn); // Aviso no console
+      evt.stopImmediatePropagation();
+      evt.preventDefault();
+      return false;
+    }
+    console.log('Clique aceito, bloqueando botão por 2 segundos:', btn); // Log para clique normal
+    btn.disabled = true;
+    setTimeout(() => btn.disabled = false, 2000); // 2 segundos
+  }, true); // true = captura antes do onclick
+});
+
+
  </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

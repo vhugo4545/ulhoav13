@@ -383,18 +383,59 @@ document.addEventListener('input', function (e) {
   }
 });
 
+// Adiciona checkbox acima do textarea de resumo (só uma vez por grupo)
+function inserirCheckboxResumo(idSuffix) {
+  const textarea = document.getElementById(`resumo-${idSuffix}`);
+  if (!textarea) return;
+
+  if (!document.getElementById(`checkboxResumoManual-${idSuffix}`)) {
+    const div = document.createElement("div");
+    div.className = "mb-1";
+    div.innerHTML = `
+      <label class="form-check-label" style="font-size:0.93em">
+        <input type="checkbox" class="form-check-input me-1" id="checkboxResumoManual-${idSuffix}">
+        Editar manualmente
+      </label>
+    `;
+    textarea.parentNode.insertBefore(div, textarea);
+
+    // Ao focar ou desfocar, ativa modo manual
+    textarea.addEventListener("focus", () => {
+      document.getElementById(`checkboxResumoManual-${idSuffix}`).checked = true;
+    });
+    textarea.addEventListener("blur", () => {
+      document.getElementById(`checkboxResumoManual-${idSuffix}`).checked = true;
+    });
+  }
+}
+
+// Função para atualizar resumo do grupo
 function atualizarResumoDoGrupo(idSuffix) {
+  inserirCheckboxResumo(idSuffix);
+
+  const checkbox = document.getElementById(`checkboxResumoManual-${idSuffix}`);
+  const textarea = document.getElementById(`resumo-${idSuffix}`);
+
+  // Se não existe, não faz nada
+  if (!textarea) return;
+
+  // Se modo manual estiver ativado, não atualiza
+  if (checkbox?.checked) {
+    console.log("Resumo do grupo NÃO foi atualizado pois está em modo manual.");
+    return;
+  }
+
+  // Atualiza automaticamente se não estiver em modo manual
   const tabela = document.querySelector(`#tabela-${idSuffix} tbody`);
-  const linhas = tabela.querySelectorAll("tr");
+  const linhas = tabela?.querySelectorAll("tr") || [];
   const alturaMontante = document.querySelector(`#collapse-${idSuffix} input[name='altura_montante']`)?.value || "";
 
   const primeiro = linhas[0]?.querySelector("td:nth-child(2)")?.textContent?.trim() || "";
   const segundo = linhas[1]?.querySelector("td:nth-child(2)")?.textContent?.trim() || "";
 
   const resumo = `${primeiro}\nem ${segundo}\nAltura do Montante: ${alturaMontante} m \nAltura Final:\nFixação:`;
-
-  const textarea = document.getElementById(`resumo-${idSuffix}`);
-  if (textarea) textarea.value = resumo;
+  textarea.value = resumo;
+  console.log("Resumo do grupo atualizado automaticamente (modo automático).");
 }
 
 
@@ -517,7 +558,7 @@ function criarBlocoDeProposta(nomeGrupo = "", ambiente = "") {
                     </tfoot>
                   </table>
                   <div class="mt-3">
-                    <label class="form-label">Resumo do Grupo</label>
+                 
                     <textarea id="resumo-${idSuffix}" class="form-control form-control-sm" rows="6" ></textarea>
                   </div>
                 </div>

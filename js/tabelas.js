@@ -212,18 +212,33 @@ function abrirSubstituirProduto(botao, idSuffix) {
 }
 
 // Mostra sugestões na sublinha
+function normalizarTexto(texto) {
+  return (texto || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")   // Remove acentos
+    .replace(/[\s"'\/\\\-.,]+/g, " ")  // Troca pontuações por espaço
+    .trim();
+}
+
 function mostrarSugestoesSub(input, idSuffix) {
-  const termo = input.value.trim().toLowerCase();
+  const termo = input.value.trim();
   const container = document.getElementById(`sugestoes-${idSuffix}-sub`);
   if (!container) return;
   if (termo.length < 3) {
     container.innerHTML = '';
     return;
   }
-  const resultados = todosProdutos
-    .filter(prod => (prod.descricao || '').toLowerCase().includes(termo))
-    .slice(0, 6);
-  // armazena em sugestoesTemp sob chave sub
+
+  // Divide em termos (removendo espaços extras), normaliza cada um
+  const termos = termo.split(";").map(t => normalizarTexto(t)).filter(Boolean);
+
+  const resultados = todosProdutos.filter(prod => {
+    const descNorm = normalizarTexto(prod.descricao);
+    // Só retorna se TODOS os termos existirem na descrição normalizada
+    return termos.every(term => descNorm.includes(term));
+  }).slice(0, 6);
+
   sugestoesTemp[`${idSuffix}-sub`] = resultados;
 
   container.innerHTML = resultados.length
@@ -236,6 +251,7 @@ function mostrarSugestoesSub(input, idSuffix) {
       }</tbody></table>`
     : `<div class="text-muted px-2">Nenhum resultado encontrado</div>`;
 }
+
 
 function substituirProdutoPeloIndice(idSuffix, index) {
   const key = `${idSuffix}-sub`;

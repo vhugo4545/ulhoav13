@@ -70,6 +70,11 @@ body {
     background: rgba(255, 255, 255, 0.2);
     border-radius: 5px;
 }
+input.form-control[placeholder="Ambiente"] {
+  width: 800px !important;   /* ou o valor que preferir */
+  max-width: 98vw;
+  /* Mantém altura e fonte padrão do Bootstrap */
+}
 
 
 /* Rodapé do Menu - Botões */
@@ -424,4 +429,11 @@ th {
 .neutral-delete:hover {
   background-color: #dee2e6;
   color: #212529;
+}
+
+
+input.form-control[placeholder="Ambiente"] {
+  width: 800px !important;   /* ou o valor que preferir */
+  max-width: 98vw;
+  /* Mantém altura e fonte padrão do Bootstrap */
 }

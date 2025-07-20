@@ -39,24 +39,25 @@ function gerarOrcamentoParaImpressao() {
   const getValue = id => document.getElementById(id)?.value || "-";
 
   // ---------- 3. COLETA DADOS GERAIS ----------
-  const dados = {
-    numero:             getValue("numeroOrcamento"),
-    data:               getValue("dataOrcamento"),
-    origem:             getValue("origemCliente"),
-    nomeOrigem:         getValue("nomeOrigem"),
-    codigoOrigem:       getValue("codigoOrigem"),
-    telefoneOrigem:     getValue("telefoneOrigem"),
-    emailOrigem:        getValue("emailOrigem"),
-    comissao:           getValue("comissaoArquiteto"),
-    operador:           getValue("operadorInterno"),
-    enderecoObra:       getValue("enderecoObra"),
-    contatoResponsavel: getValue("contatoResponsavel"),
-    prazos:             getValue("prazosArea"),
-    condicao:           getValue("condicaoPagamento"),
-    condicoesGerais:    getValue("condicoesGerais"),
-    vendedor: document.getElementById("vendedorResponsavel")
-               ?.selectedOptions[0]?.textContent || "-"
-  };
+const dados = {
+  numero:             getValue("numeroOrcamento"),
+  data:               getValue("dataOrcamento"),
+  origem:             getValue("origemCliente"),
+  nomeOrigem:         getValue("nomeOrigem"),
+  codigoOrigem:       getValue("codigoOrigem"),
+  telefoneOrigem:     getValue("telefoneOrigem"),
+  emailOrigem:        getValue("emailOrigem"),
+  comissao:           getValue("comissaoArquiteto"),
+  operador:           getValue("operadorInterno"),
+  // Ajuste AQUI:
+  enderecoObra:       `Rua: ${getValue("enderecoObra")}, Número: ${getValue("numeroObra")}, Bairro: ${getValue("bairro")} - Complemento: ${getValue("complemento")} - Cidade: ${getValue("cidade")}/${getValue("estado")} - CEP: ${getValue("cep")}`,
+  contatoResponsavel: getValue("contatoResponsavel"),
+  prazos:             getValue("prazosArea"),
+  condicao:           getValue("condicaoPagamento"),
+  condicoesGerais:    getValue("condicoesGerais"),
+  vendedor: document.getElementById("vendedorResponsavel")
+             ?.selectedOptions[0]?.textContent || "-"
+};
 
   // ---------- 4. DADOS DO CLIENTE ----------
   const clienteWrapper = document.querySelector(".cliente-item");
@@ -107,7 +108,7 @@ function gerarOrcamentoParaImpressao() {
           <div class="div4 border p-2">${g.nomeProduto}</div>
           <div class="div6 border p-2">${g.observacao}</div>
         </div>
-        ${g.resumoGrupo ? `<div class="border p-2 small text-muted"><strong>Resumo do Grupo:</strong><br>${g.resumoGrupo}</div>` : ""}
+        ${g.resumoGrupo ? `<div class="border p-2 small text-muted"><strong></strong><br>${g.resumoGrupo}</div>` : ""}
       `;
     });
 

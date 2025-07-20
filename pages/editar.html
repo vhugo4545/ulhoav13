@@ -28,14 +28,7 @@
     <span class="material-icons-outlined">add_circle_outline</span><br> Duplicar Proposta
   </button>
 
-  <button id="btn-editar-modelo" class="sidebar-button" onclick="redirecionarParaEdicao()">
-    <span class="material-icons-outlined">edit_note</span><br>  Editar Modelo
-  </button>
 
- <a id="btn-editar-formulas" href="modelo.html" class="sidebar-button" style="text-decoration: none; flex-direction: column;">
-  <span class="material-icons-outlined">functions</span>
-  Editar Fórmulas
-</a>
 
 
   <button id="btn-atualizar" class="sidebar-button" onclick="atualizarPropostaEditavel()">
@@ -70,7 +63,7 @@
 <script>
   function redirecionarParaEdicao() {
     const id = new URLSearchParams(location.search).get("id");
-    window.location.href = "editar.html?id=" + id;
+    window.location.href = "editar.html?id=" + "68746e305b9691a7ed3b3f97";
   }
 </script>
 
@@ -292,14 +285,41 @@
           </div>
 
 
+
         </div>
       </form>
+      <div class="d-flex justify-content-center my-4 position-relative">
+        <div class="d-flex flex-column align-items-center w-100" style="max-width: 600px;">
+          <div class="input-group input-group-lg shadow w-100">
+            <input id="buscaProduto" type="text" class="form-control text-center" placeholder="Pesquisar produto, cliente ou proposta..." autocomplete="off">
+            <button class="btn btn-primary d-flex align-items-center gap-2 px-4" type="button">
+              <span class="material-icons-outlined">search</span>
+              <span>Buscar</span>
+            </button>
+          </div>
 
+          <button id="fecharSanfonasBtn" class="btn btn-outline-secondary btn-sm w-100 mt-2" onclick="fecharTodasSanfonas()">
+            🔽 Fechar todos os blocos
+          </button>
+
+          <button id="abrirSanfonasBtn" class="btn btn-outline-primary btn-sm w-100 mt-2" onclick="abrirTodasSanfonas()">
+            🔼 Abrir todos os blocos
+          </button>
+
+
+
+          <ul id="sugestoesProdutos" class="list-group position-absolute w-100 shadow bg-white mt-2" style="z-index: 10; top: 100%; display: block; max-height: 200px; overflow-y: auto;"><li class="list-group-item list-group-item-action" style="cursor: pointer;">Guarda Corpo - Proteção</li><li class="list-group-item list-group-item-action" style="cursor: pointer;">Guarda Corpo - Montante H</li><li class="list-group-item list-group-item-action" style="cursor: pointer;">Guarda Corpo - Calha Infinity</li><li class="list-group-item list-group-item-action" style="cursor: pointer;">Guarda Corpo - Botão</li><li class="list-group-item list-group-item-action" style="cursor: pointer;">Guarda Corpo - Garra</li><li class="list-group-item list-group-item-action" style="cursor: pointer;">Guarda Corpo - Calha Ferreira Ulhoa</li><li class="list-group-item list-group-item-action" style="cursor: pointer;">Guarda Corpo - Canaleta</li><li class="list-group-item list-group-item-action" style="cursor: pointer;">Guarda Corpo - Spider</li><li class="list-group-item list-group-item-action" style="cursor: pointer;">Fechamento Frontal</li><li class="list-group-item list-group-item-action" style="cursor: pointer;">Pergolado</li><li class="list-group-item list-group-item-action" style="cursor: pointer;">Porta / Portão / Portinhola</li><li class="list-group-item list-group-item-action" style="cursor: pointer;">Corrimão</li><li class="list-group-item list-group-item-action" style="cursor: pointer;">Perfil U</li><li class="list-group-item list-group-item-action" style="cursor: pointer;">Revestimento</li><li class="list-group-item list-group-item-action" style="cursor: pointer;">Espera</li><li class="list-group-item list-group-item-action" style="cursor: pointer;">Instalação</li><li class="list-group-item list-group-item-action" style="cursor: pointer;">Vidro</li></ul>
+        </div>
+      </div>
+<br>
+<br>
+<br>
 
       <div class="col-lg-12" id="blocosProdutosContainer">
         <!-- Blocos dinâmicos de produtos serão adicionados aqui -->
       </div>
     </div>
+    
     <br>
     <br>
     <br>
@@ -341,39 +361,7 @@
               <label class="form-label">CNPJ ou CPF</label>
               <input type="text" class="form-control" id="popupCliente_cnpjcpf" required>
             </div>
-            <div class="mb-3">
-              <label class="form-label">Estado</label>
-              <select class="form-select" id="popupCliente_estado" required>
-                <option value="" disabled selected>Selecione o estado</option>
-                <option value="AC">Acre (AC)</option>
-                <option value="AL">Alagoas (AL)</option>
-                <option value="AP">Amapá (AP)</option>
-                <option value="AM">Amazonas (AM)</option>
-                <option value="BA">Bahia (BA)</option>
-                <option value="CE">Ceará (CE)</option>
-                <option value="DF">Distrito Federal (DF)</option>
-                <option value="ES">Espírito Santo (ES)</option>
-                <option value="GO">Goiás (GO)</option>
-                <option value="MA">Maranhão (MA)</option>
-                <option value="MT">Mato Grosso (MT)</option>
-                <option value="MS">Mato Grosso do Sul (MS)</option>
-                <option value="MG">Minas Gerais (MG)</option>
-                <option value="PA">Pará (PA)</option>
-                <option value="PB">Paraíba (PB)</option>
-                <option value="PR">Paraná (PR)</option>
-                <option value="PE">Pernambuco (PE)</option>
-                <option value="PI">Piauí (PI)</option>
-                <option value="RJ">Rio de Janeiro (RJ)</option>
-                <option value="RN">Rio Grande do Norte (RN)</option>
-                <option value="RS">Rio Grande do Sul (RS)</option>
-                <option value="RO">Rondônia (RO)</option>
-                <option value="RR">Roraima (RR)</option>
-                <option value="SC">Santa Catarina (SC)</option>
-                <option value="SP">São Paulo (SP)</option>
-                <option value="SE">Sergipe (SE)</option>
-                <option value="TO">Tocantins (TO)</option>
-              </select>
-            </div>
+        
           </form>
         </div>
         <div class="modal-footer">
@@ -395,6 +383,7 @@
     <ul id="listaPendencias" class="mb-3" style="padding-left: 18px;"></ul>
     <button onclick="fecharPopupPendencias()" class="btn btn-secondary w-100">Fechar</button>
   </div>
+   <script src="../js/cadastroClientes.js" defer></script>
   <script src="../js/validarToken.js" defer></script>
   <script src="../js/sair.js" defer></script>
   <!-- SCRIPTS -->
@@ -448,192 +437,45 @@
 
 
   </script>
-  <script>
-    // Gera um código de integração aleatório (interno)
-    function gerarCodigoClienteIntegracao() {
-      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-      let codigo = "";
-      for (let i = 0; i < 7; i++) {
-        codigo += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return codigo;
-    }
 
-    // Aplica máscara dinâmica para CPF ou CNPJ
-    function aplicarMascaraCnpjCpf(valor) {
-      valor = valor.replace(/\D/g, "");
-      if (valor.length <= 11) {
-        return valor.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, "$1.$2.$3-$4");
-      } else {
-        return valor.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{1,2})/, "$1.$2.$3/$4-$5");
-      }
-    }
+<script>
 
-    // Abre o popup e limpa os campos
-    function abrirPopupIncluirCliente() {
-      const form = document.getElementById("popupCliente_form");
-      const modalEl = document.getElementById("popupClienteModal");
-
-      if (!form || !modalEl) {
-        console.warn("⚠️ Popup ou formulário não encontrado.");
-        return;
-      }
-
-      form.reset();
-      new bootstrap.Modal(modalEl).show();
-    }
-
-    // Função para remover caracteres não numéricos
-    function limparNumero(valor) {
-      return valor.replace(/\D/g, "");
-    }
-
-    function abrirTodasSanfonas() {
-      document.querySelectorAll(".accordion-button").forEach(botao => {
-        if (botao.classList.contains("collapsed")) {
-          botao.click();
-        }
-      });
-    }
-    // Validação de CPF
-    function validarCPF(cpf) {
-      cpf = limparNumero(cpf);
-      if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
-
-      let soma = 0;
-      for (let i = 0; i < 9; i++) soma += +cpf[i] * (10 - i);
-      let resto = (soma * 10) % 11;
-      if (resto === 10 || resto === 11) resto = 0;
-      if (resto !== +cpf[9]) return false;
-
-      soma = 0;
-      for (let i = 0; i < 10; i++) soma += +cpf[i] * (11 - i);
-      resto = (soma * 10) % 11;
-      if (resto === 10 || resto === 11) resto = 0;
-
-      return resto === +cpf[10];
-    }
-
-    // Validação de CNPJ
-    function validarCNPJ(cnpj) {
-      cnpj = limparNumero(cnpj);
-      if (cnpj.length !== 14 || /^(\d)\1+$/.test(cnpj)) return false;
-
-      let t = cnpj.length - 2,
-        d = cnpj.substring(t),
-        d1 = 0,
-        d2 = 0;
-
-      for (let i = t - 1, j = 5; i >= 0; j = j === 2 ? 9 : j - 1) {
-        d1 += +cnpj[i] * j;
-      }
-
-      d1 = 11 - (d1 % 11);
-      if (d1 >= 10) d1 = 0;
-      if (d1 !== +d[0]) return false;
-
-      for (let i = t, j = 6; i >= 0; j = j === 2 ? 9 : j - 1) {
-        d2 += +cnpj[i] * j;
-      }
-
-      d2 = 11 - (d2 % 11);
-      if (d2 >= 10) d2 = 0;
-
-      return d2 === +d[1];
-    }
-
-    // Envia cliente para API
-    async function enviarClienteParaAPI() {
-      const form = document.getElementById("popupCliente_form");
-      if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-      }
-
-      const email = document.getElementById("popupCliente_email").value.trim();
-      if (!email.includes("@")) {
-        alert("⚠️ Por favor, insira um e-mail válido.");
-        return;
-      }
-
-      const cnpjCpfRaw = document.getElementById("popupCliente_cnpjcpf").value.trim();
-      const cnpjCpf = limparNumero(cnpjCpfRaw);
-
-      const tipoDocumentoValido =
-        cnpjCpf.length === 11 ? validarCPF(cnpjCpf) : validarCNPJ(cnpjCpf);
-
-      if (!tipoDocumentoValido) {
-        alert("⚠️ CPF ou CNPJ inválido.");
-        return;
-      }
-
-      mostrarCarregando();
-
-      const cliente = {
-        codigo_cliente_integracao: gerarCodigoClienteIntegracao(),
-        razao_social: document.getElementById("popupCliente_razao").value.trim(),
-        nome_fantasia: document.getElementById("popupCliente_fantasia").value.trim(),
-        email,
-        cnpj_cpf: cnpjCpf,
-        estado: document.getElementById("popupCliente_estado").value.trim(),
-      };
-
-      try {
-        const resposta = await fetch("https://ulhoa-0a02024d350a.herokuapp.com/clientes/incluirCliente", {
-          method: "POST",
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(cliente),
-        });
-
-        const resultado = await resposta.json();
-
-        if (resposta.ok) {
-          bootstrap.Modal.getInstance(document.getElementById("popupClienteModal"))?.hide();
-
-          preencherCamposCliente({
-            nome_razao_social: cliente.razao_social,
-            codigoOmie: resultado?.codigo_cliente_omie || "",
-            cpfCnpj: cliente.cnpj_cpf,
-            nome_contato: cliente.nome_fantasia,
-            funcao: "",
-            telefone: ""
-          });
-
-          const mensagem = `Cliente ${cliente.razao_social} foi cadastrado com sucesso e está disponível para seleção.`;
-          ocultarCarregando();
-          mostrarPopupCustomizado("✅ Cliente incluído com sucesso!", mensagem, "success");
-          ocultarCarregando();
-        } else {
-          const erroMensagem = resultado?.message || "Erro inesperado ao incluir cliente.";
-          mostrarPopupCustomizado("❌ Erro ao incluir cliente", erroMensagem, "danger");
-          ocultarCarregando();
-        }
-      } catch (err) {
-        const erroMensagem = resultado?.message || "Erro inesperado ao incluir cliente.";
-        mostrarPopupCustomizado("❌ Erro ao incluir cliente", erroMensagem, "danger");
-        ocultarCarregando();
-      }
-    }
-    // Aplica máscara ao digitar
-    document.addEventListener("input", function (e) {
-      if (e.target.id === "popupCliente_cnpjcpf") {
-        e.target.value = aplicarMascaraCnpjCpf(e.target.value);
+  
+  function abrirTodasSanfonas() {
+    document.querySelectorAll(".accordion-button").forEach(botao => {
+      if (botao.classList.contains("collapsed")) {
+        botao.click();
       }
     });
+  }
 
-    // Preenche campos no formulário principal
-    function preencherCamposCliente(cliente) {
-      const container = document.querySelector(".cliente-item");
-      if (!container) return;
 
-      container.querySelector(".razaoSocial").value = cliente.nome_razao_social || "";
-      container.querySelector(".codigoCliente").value = cliente.codigoOmie || "";
-      container.querySelector(".cpfCnpj").value = cliente.cpfCnpj || "";
-      container.querySelector(".nomeContato").value = cliente.nome_contato || "";
-      container.querySelector(".funcaoCliente").value = cliente.funcao || "";
-      container.querySelector(".telefoneCliente").value = cliente.telefone || "";
+
+
+
+
+
+
+  
+  // Aplica proteção de clique duplo em todos os botões com a classe .sidebar-button
+// Aplica proteção de clique duplo em todos os botões com a classe .sidebar-button
+document.querySelectorAll('.sidebar-button').forEach(btn => {
+  btn.addEventListener('click', function(evt) {
+    if (btn.disabled) {
+      console.warn('Clique duplo detectado e bloqueado em:', btn); // Aviso no console
+      evt.stopImmediatePropagation();
+      evt.preventDefault();
+      return false;
     }
-  </script>
+    console.log('Clique aceito, bloqueando botão por 2 segundos:', btn); // Log para clique normal
+    btn.disabled = true;
+    setTimeout(() => btn.disabled = false, 2000); // 2 segundos
+  }, true); // true = captura antes do onclick
+});
+
+
+</script>
+
 
 
 </body>

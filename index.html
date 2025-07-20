@@ -13,6 +13,7 @@
     <div id="loginForm">
       <h2>Login</h2>
 
+      
       <label for="loginEmail">E-mail</label>
       <input type="email" id="loginEmail" placeholder="Digite seu e-mail" required />
 
@@ -66,5 +67,11 @@
       cad.style.display = cad.style.display === 'none' ? 'block' : 'none';
     }
   </script>
+  <script>
+  function redirecionarParaEdicao() {
+    const id = new URLSearchParams(location.search).get("id");
+    window.location.href = "editar.html?id=" + "68746e305b9691a7ed3b3f97";
+  }
+</script>
 </body>
 </html>

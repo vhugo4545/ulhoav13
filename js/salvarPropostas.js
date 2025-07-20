@@ -392,7 +392,7 @@ async function atualizarPropostaModelo() {
     abrirTodasSanfonas();
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    const idProposta = "6851c413b30e3e4dda354132";
+    const idProposta = "68746e305b9691a7ed3b3f97";
     if (!idProposta) {
       alert("❌ ID da proposta não encontrado.");
       return { erro: "ID da proposta não encontrado." };

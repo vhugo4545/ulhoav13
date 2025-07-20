@@ -1,6 +1,8 @@
 ﻿/* Google Font */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
 
+
+
 /* Reset e base */
 * {
   box-sizing: border-box;
@@ -131,4 +133,10 @@ button:active {
   h1, h2 {
     font-size: 1.4rem;
   }
+}
+
+input.form-control[placeholder="Ambiente"] {
+  width: 800px !important;   /* ou o valor que preferir */
+  max-width: 98vw;
+  /* Mantém altura e fonte padrão do Bootstrap */
 }

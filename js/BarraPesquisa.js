@@ -23,7 +23,8 @@ let grupos = [];
 carregarPropostaModelo();
 
 async function carregarPropostaModelo() {
-  const id = "6851c413b30e3e4dda354132"; // ID fixo da proposta
+  //68746e305b9691a7ed3b3f97
+  const id = "68746e305b9691a7ed3b3f97"; // ID fixo da proposta
   const url = `https://ulhoa-0a02024d350a.herokuapp.com/api/propostas/${id}`;
 
   try {

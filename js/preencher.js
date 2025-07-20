@@ -38,7 +38,7 @@ async function localizarECarregarPropostaPorId() {
   const estaEditandoModelo = window.location.pathname.includes("editarModelo.html");
 
   const idDesejado = estaEditandoModelo
-    ? "6851c413b30e3e4dda354132" // ID fixo para modo de edição de modelo
+    ? "68746e305b9691a7ed3b3f97" // ID fixo para modo de edição de modelo
     : obterIdPropostaDaUrl();
 
   if (!idDesejado) {

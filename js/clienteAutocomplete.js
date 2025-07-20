@@ -140,7 +140,7 @@ function adicionarClienteRelacionado() {
 
   // Remove botão de incluir cliente (popup) se existir
   const botaoMais = novo.querySelector("button[onclick='abrirPopupIncluirCliente()']");
-  if (botaoMais) botaoMais.remove();
+ 
 
   // Remove sugestão de autocomplete duplicada, se houver
   const sugestoesAntigas = novo.querySelector(".sugestoesCliente");

@@ -16,16 +16,21 @@
   <!-- Menu lateral -->
   <aside class="sidebar">
     <ul>
-      <li><a href="modelo.html"><span class="material-icons-outlined">home</span> Criar Base</a></li>
-      <li><a href="../pages/listagem.html"><span class="material-icons-outlined">list</span> Início</a></li>
-      <li><a href="#"><span class="material-icons-outlined">dashboard</span> Dashboard</a></li>
-      <li><a href="#"><span class="material-icons-outlined">settings</span> Configurações</a></li>
-      <li><a href="#"><span class="material-icons-outlined">logout</span> Logout</a></li>
-    </ul>
+      </ul>
     <div class="sidebar-footer">
       <button id="save-proposal" class="sidebar-button" onclick="irParaPagina('criar.html')">
         <span class="material-icons-outlined">save</span> Criar Proposta
       </button>
+      
+  <button id="btn-editar-modelo" class="sidebar-button" onclick="redirecionarParaEdicao()">
+    <span class="material-icons-outlined">edit_note</span>Editar Modelo
+  </button>
+
+ <a id="btn-editar-formulas" href="modelo.html" class="sidebar-button" style="text-decoration: none; flex-direction: column;">
+  <span class="material-icons-outlined">functions</span>
+  Editar Fórmulas
+</a>
+
     </div>
   </aside>
 
@@ -101,7 +106,29 @@
   </div>
 </div>
 
+  <script>
+  function redirecionarParaEdicao() {
+    const id = new URLSearchParams(location.search).get("id");
+    window.location.href = "editar.html?id=" + "68746e305b9691a7ed3b3f97";
+  }
+  // Aplica proteção de clique duplo em todos os botões com a classe .sidebar-button
+// Aplica proteção de clique duplo em todos os botões com a classe .sidebar-button
+document.querySelectorAll('.sidebar-button').forEach(btn => {
+  btn.addEventListener('click', function(evt) {
+    if (btn.disabled) {
+      console.warn('Clique duplo detectado e bloqueado em:', btn); // Aviso no console
+      evt.stopImmediatePropagation();
+      evt.preventDefault();
+      return false;
+    }
+    console.log('Clique aceito, bloqueando botão por 2 segundos:', btn); // Log para clique normal
+    btn.disabled = true;
+    setTimeout(() => btn.disabled = false, 2000); // 2 segundos
+  }, true); // true = captura antes do onclick
+});
 
+
+</script>
   </main>
     <script src="../js/validarToken.js" defer></script>
    <script src="../js/carregamento.js" defer></script>

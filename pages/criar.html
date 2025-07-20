@@ -19,11 +19,9 @@
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <ul>
-      <li><a href="modelo.html"><span class="material-icons-outlined">home</span> Criar Base</a></li>
+    
       <li><a href="../pages/listagem.html"><span class="material-icons-outlined">list</span> Início</a></li>
-      <li><a href="#"><span class="material-icons-outlined">inventory_2</span> Produtos</a></li>
-      <li><a href="#"><span class="material-icons-outlined">settings</span> Configurações</a></li>
-      <li><a href="#"><span class="material-icons-outlined">logout</span> Logout</a></li>
+     
     </ul>
     <button id="btn-criar" class="sidebar-button" onclick="salvarPropostaEditavel() ">
       <span class="material-icons-outlined">add_circle_outline</span> Criar Proposta
@@ -150,9 +148,6 @@
               </div>
             </div>
           </div>
-
-
-
 
 
 
@@ -348,39 +343,7 @@
               <label class="form-label">CNPJ ou CPF</label>
               <input type="text" class="form-control" id="popupCliente_cnpjcpf" required>
             </div>
-            <div class="mb-3">
-              <label class="form-label">Estado</label>
-              <select class="form-select" id="popupCliente_estado" required>
-                <option value="" disabled selected>Selecione o estado</option>
-                <option value="AC">Acre (AC)</option>
-                <option value="AL">Alagoas (AL)</option>
-                <option value="AP">Amapá (AP)</option>
-                <option value="AM">Amazonas (AM)</option>
-                <option value="BA">Bahia (BA)</option>
-                <option value="CE">Ceará (CE)</option>
-                <option value="DF">Distrito Federal (DF)</option>
-                <option value="ES">Espírito Santo (ES)</option>
-                <option value="GO">Goiás (GO)</option>
-                <option value="MA">Maranhão (MA)</option>
-                <option value="MT">Mato Grosso (MT)</option>
-                <option value="MS">Mato Grosso do Sul (MS)</option>
-                <option value="MG">Minas Gerais (MG)</option>
-                <option value="PA">Pará (PA)</option>
-                <option value="PB">Paraíba (PB)</option>
-                <option value="PR">Paraná (PR)</option>
-                <option value="PE">Pernambuco (PE)</option>
-                <option value="PI">Piauí (PI)</option>
-                <option value="RJ">Rio de Janeiro (RJ)</option>
-                <option value="RN">Rio Grande do Norte (RN)</option>
-                <option value="RS">Rio Grande do Sul (RS)</option>
-                <option value="RO">Rondônia (RO)</option>
-                <option value="RR">Roraima (RR)</option>
-                <option value="SC">Santa Catarina (SC)</option>
-                <option value="SP">São Paulo (SP)</option>
-                <option value="SE">Sergipe (SE)</option>
-                <option value="TO">Tocantins (TO)</option>
-              </select>
-            </div>
+          
           </form>
         </div>
         <div class="modal-footer">
@@ -423,11 +386,50 @@ document.addEventListener("DOMContentLoaded", () => {
   setTimeout(observarEPreencherOperadorInterno, 3000); // espera 3 segundos
 });
 
+
 </script>
+
+<script>
+
+  function abrirTodasSanfonas() {
+    document.querySelectorAll(".accordion-button").forEach(botao => {
+      if (botao.classList.contains("collapsed")) {
+        botao.click();
+      }
+    });
+  }
+
+
+
+
+
+
+
+
+  // Aplica proteção de clique duplo em todos os botões com a classe .sidebar-button
+// Aplica proteção de clique duplo em todos os botões com a classe .sidebar-button
+document.querySelectorAll('.sidebar-button').forEach(btn => {
+  btn.addEventListener('click', function(evt) {
+    if (btn.disabled) {
+      console.warn('Clique duplo detectado e bloqueado em:', btn); // Aviso no console
+      evt.stopImmediatePropagation();
+      evt.preventDefault();
+      return false;
+    }
+    console.log('Clique aceito, bloqueando botão por 2 segundos:', btn); // Log para clique normal
+    btn.disabled = true;
+    setTimeout(() => btn.disabled = false, 2000); // 2 segundos
+  }, true); // true = captura antes do onclick
+});
+
+
+</script>
+
 
 
   <!-- SCRIPTS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+ <script src="../js/cadastroClientes.js" defer></script>
   <script src="../js/validarToken.js" defer></script>
   <script src="../js/auth.js" defer></script>
   <script src="../js/produtos.js" defer></script>
@@ -446,192 +448,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-  <script>
-    // Gera um código de integração aleatório (interno)
-    function gerarCodigoClienteIntegracao() {
-      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-      let codigo = "";
-      for (let i = 0; i < 7; i++) {
-        codigo += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return codigo;
-    }
 
-    // Aplica máscara dinâmica para CPF ou CNPJ
-    function aplicarMascaraCnpjCpf(valor) {
-      valor = valor.replace(/\D/g, "");
-      if (valor.length <= 11) {
-        return valor.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, "$1.$2.$3-$4");
-      } else {
-        return valor.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{1,2})/, "$1.$2.$3/$4-$5");
-      }
-    }
 
-    // Abre o popup e limpa os campos
-    function abrirPopupIncluirCliente() {
-      const form = document.getElementById("popupCliente_form");
-      const modalEl = document.getElementById("popupClienteModal");
 
-      if (!form || !modalEl) {
-        console.warn("⚠️ Popup ou formulário não encontrado.");
-        return;
-      }
 
-      form.reset();
-      new bootstrap.Modal(modalEl).show();
-    }
 
-// Função para remover caracteres não numéricos
-function limparNumero(valor) {
-  return valor.replace(/\D/g, "");
-}
-
-  function abrirTodasSanfonas() {
-      document.querySelectorAll(".accordion-button").forEach(botao => {
-        if (botao.classList.contains("collapsed")) {
-          botao.click();
-        }
-      });
-    }
-// Validação de CPF
-function validarCPF(cpf) {
-  cpf = limparNumero(cpf);
-  if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
-
-  let soma = 0;
-  for (let i = 0; i < 9; i++) soma += +cpf[i] * (10 - i);
-  let resto = (soma * 10) % 11;
-  if (resto === 10 || resto === 11) resto = 0;
-  if (resto !== +cpf[9]) return false;
-
-  soma = 0;
-  for (let i = 0; i < 10; i++) soma += +cpf[i] * (11 - i);
-  resto = (soma * 10) % 11;
-  if (resto === 10 || resto === 11) resto = 0;
-
-  return resto === +cpf[10];
-}
-
-// Validação de CNPJ
-function validarCNPJ(cnpj) {
-  cnpj = limparNumero(cnpj);
-  if (cnpj.length !== 14 || /^(\d)\1+$/.test(cnpj)) return false;
-
-  let t = cnpj.length - 2,
-    d = cnpj.substring(t),
-    d1 = 0,
-    d2 = 0;
-
-  for (let i = t - 1, j = 5; i >= 0; j = j === 2 ? 9 : j - 1) {
-    d1 += +cnpj[i] * j;
-  }
-
-  d1 = 11 - (d1 % 11);
-  if (d1 >= 10) d1 = 0;
-  if (d1 !== +d[0]) return false;
-
-  for (let i = t, j = 6; i >= 0; j = j === 2 ? 9 : j - 1) {
-    d2 += +cnpj[i] * j;
-  }
-
-  d2 = 11 - (d2 % 11);
-  if (d2 >= 10) d2 = 0;
-
-  return d2 === +d[1];
-}
-    
-    // Envia cliente para API
-   async function enviarClienteParaAPI() {
-  const form = document.getElementById("popupCliente_form");
-  if (!form.checkValidity()) {
-    form.reportValidity();
-    return;
-  }
-
-  const email = document.getElementById("popupCliente_email").value.trim();
-  if (!email.includes("@")) {
-    alert("⚠️ Por favor, insira um e-mail válido.");
-    return;
-  }
-
-  const cnpjCpfRaw = document.getElementById("popupCliente_cnpjcpf").value.trim();
-  const cnpjCpf = limparNumero(cnpjCpfRaw);
-
-  const tipoDocumentoValido =
-    cnpjCpf.length === 11 ? validarCPF(cnpjCpf) : validarCNPJ(cnpjCpf);
-
-  if (!tipoDocumentoValido) {
-    alert("⚠️ CPF ou CNPJ inválido.");
-    return;
-  }
-
-  mostrarCarregando();
-
-  const cliente = {
-    codigo_cliente_integracao: gerarCodigoClienteIntegracao(),
-    razao_social: document.getElementById("popupCliente_razao").value.trim(),
-    nome_fantasia: document.getElementById("popupCliente_fantasia").value.trim(),
-    email,
-    cnpj_cpf: cnpjCpf,
-    estado: document.getElementById("popupCliente_estado").value.trim(),
-  };
-
-  try {
-    const resposta = await fetch("https://ulhoa-0a02024d350a.herokuapp.com/clientes/incluirCliente", {
-      method: "POST",
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(cliente),
-    });
-
-    const resultado = await resposta.json();
-
-    if (resposta.ok) {
-      bootstrap.Modal.getInstance(document.getElementById("popupClienteModal"))?.hide();
-
-      preencherCamposCliente({
-        nome_razao_social: cliente.razao_social,
-        codigoOmie: resultado?.codigo_cliente_omie || "",
-        cpfCnpj: cliente.cnpj_cpf,
-        nome_contato: cliente.nome_fantasia,
-        funcao: "",
-        telefone: ""
-      });
-
-      const mensagem = `Cliente ${cliente.razao_social} foi cadastrado com sucesso e está disponível para seleção.`;
-      ocultarCarregando();
-      mostrarPopupCustomizado("✅ Cliente incluído com sucesso!", mensagem, "success");
-        ocultarCarregando();
-    } else {
-      const erroMensagem = resultado?.message || "Erro inesperado ao incluir cliente.";
-mostrarPopupCustomizado("❌ Erro ao incluir cliente", erroMensagem, "danger");
-ocultarCarregando();
-    }
-  } catch (err) {
-     const erroMensagem = resultado?.message || "Erro inesperado ao incluir cliente.";
-mostrarPopupCustomizado("❌ Erro ao incluir cliente", erroMensagem, "danger");
-ocultarCarregando();
-  }
-}
-    // Aplica máscara ao digitar
-    document.addEventListener("input", function (e) {
-      if (e.target.id === "popupCliente_cnpjcpf") {
-        e.target.value = aplicarMascaraCnpjCpf(e.target.value);
-      }
-    });
-
-    // Preenche campos no formulário principal
-    function preencherCamposCliente(cliente) {
-      const container = document.querySelector(".cliente-item");
-      if (!container) return;
-
-      container.querySelector(".razaoSocial").value = cliente.nome_razao_social || "";
-      container.querySelector(".codigoCliente").value = cliente.codigoOmie || "";
-      container.querySelector(".cpfCnpj").value = cliente.cpfCnpj || "";
-      container.querySelector(".nomeContato").value = cliente.nome_contato || "";
-      container.querySelector(".funcaoCliente").value = cliente.funcao || "";
-      container.querySelector(".telefoneCliente").value = cliente.telefone || "";
-    }
-  </script>
  <script src="../js/envioOmie.js" defer></script>
   <script src="../js/carregamento.js" defer></script>
   <script src="../js/salvarPropostas.js" defer></script>

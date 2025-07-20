@@ -1,0 +1,90 @@
+<!-- Ambiente Financeiro Accordion -->
+<div class="accordion-item">
+  <h2 class="accordion-header">
+    <button class="accordion-button collapsed" type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#collapseFinanceiro"
+      aria-expanded="false"
+      aria-controls="collapseFinanceiro">
+      Ambiente Financeiro
+    </button>
+  </h2>
+  <div id="collapseFinanceiro" class="accordion-collapse collapse">
+    <div class="accordion-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Nome do Arquiteto(a)</label>
+          <input list="listaArquitetos" class="form-control" id="nomeArquiteto" placeholder="Nome do Arquiteto" autocomplete="off">
+          <datalist id="listaArquitetos"></datalist>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Código Omie Arquiteto</label>
+          <input type="text" class="form-control" id="codigoOmieArquiteto" readonly tabindex="-1" style="background: #f4f4f4;">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Comissão Arquiteto (%)</label>
+          <input type="number" class="form-control" id="comissaoArquiteto" min="0" max="100" step="0.01" value="5">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Valor Arquiteto (R$)</label>
+          <input type="text" class="form-control" id="valorArquiteto" readonly tabindex="-1" style="background: #f4f4f4;">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Nome do Consultor(a)</label>
+          <input type="text" class="form-control" id="nomeConsultor" placeholder="Nome do Consultor">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Valor Consultor (R$)</label>
+          <input type="text" class="form-control" id="valorConsultor" readonly tabindex="-1" style="background: #f4f4f4;">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Atualiza a datalist dos arquitetos buscando os nomes dos clientes existentes
+  function atualizarListaArquitetos() {
+    const datalist = document.getElementById('listaArquitetos');
+    datalist.innerHTML = ''; // Limpa opções antigas
+
+    // Percorre todos os blocos de clientes e adiciona na datalist
+    document.querySelectorAll('.cliente-item').forEach(cliente => {
+      const nome = cliente.querySelector('.razaoSocial')?.value?.trim();
+      const codigoOmie = cliente.querySelector('.codigoCliente')?.value?.trim();
+      if (nome) {
+        const option = document.createElement('option');
+        option.value = nome;
+        option.setAttribute('data-codigo-omie', codigoOmie || '');
+        datalist.appendChild(option);
+      }
+    });
+  }
+
+  // Atualiza o campo Código Omie ao selecionar um nome do arquiteto
+  document.getElementById('nomeArquiteto').addEventListener('input', function () {
+    const nomeSelecionado = this.value.trim();
+    let codigoOmie = '';
+    document.querySelectorAll('.cliente-item').forEach(cliente => {
+      const nome = cliente.querySelector('.razaoSocial')?.value?.trim();
+      const codigo = cliente.querySelector('.codigoCliente')?.value?.trim();
+      if (nome === nomeSelecionado) {
+        codigoOmie = codigo || '';
+      }
+    });
+    document.getElementById('codigoOmieArquiteto').value = codigoOmie;
+  });
+
+  // Atualiza a lista de arquitetos ao clicar/focar no campo nomeArquiteto para mostrar sempre atualizado
+  document.getElementById('nomeArquiteto').addEventListener('focus', atualizarListaArquitetos);
+
+  // Atualiza a lista de arquitetos quando o documento carrega
+  document.addEventListener('DOMContentLoaded', () => {
+    atualizarListaArquitetos();
+  });
+
+  // Exemplo: Se você adicionar clientes dinamicamente, chame atualizarListaArquitetos() depois
+  // No seu método adicionarClienteRelacionado(), adicione essa linha:
+  // atualizarListaArquitetos();
+</script>
+

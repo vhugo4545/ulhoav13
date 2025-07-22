@@ -585,8 +585,7 @@ async function marcarPendenteAprovacao() {
 // 3️⃣ Aprovado Pelo Gestor
 async function marcarAprovadoPeloGestor() {
     mostrarCarregando()
-   await marcarPrecosDivergentesOmie()
-  
+  await marcarPrecosDivergentesOmie()
   await atualizarStatus("Aprovado Pelo Gestor");
  ocultarCarregando() 
 }

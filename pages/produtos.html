@@ -6,9 +6,23 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body {
-      padding: 40px;
+      padding: 0;
+      margin: 0;
       background-color: #f8f9fa;
       font-family: 'Segoe UI', sans-serif;
+    }
+    .main-flex-container {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      min-height: 100vh;
+      max-width: 100vw;
+      overflow-x: auto;
+    }
+    .main-content {
+      flex: 1 1 0;
+      padding: 40px 32px 40px 40px;
+      min-width: 0;
     }
     h2 {
       font-weight: 600;
@@ -60,188 +74,277 @@
       color: white;
       border-radius: 20px;
     }
+    /* Barra lateral fixa */
+    #sidebar-formulas {
+      flex: 0 0 310px;
+      height: 100vh;
+      background: #fff;
+      border-left: 3px solid #0d6efd;
+      box-shadow: -2px 0 16px #2231;
+      padding: 25px 18px 10px 22px;
+      z-index: 1200;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      min-width: 250px;
+      max-width: 400px;
+    }
+    @media (max-width: 1100px) {
+      #sidebar-formulas {
+        display: none;
+      }
+      .main-content {
+        padding-right: 16px;
+      }
+    }
+    @media (max-width: 900px) {
+      .main-flex-container {
+        flex-direction: column;
+      }
+      #sidebar-formulas {
+        display: block;
+        position: static;
+        width: 100%;
+        height: auto;
+        border-left: none;
+        box-shadow: none;
+        padding: 14px 6px;
+        margin-top: 30px;
+      }
+    }
   </style>
 </head>
 <body>
-  <h2 class="mb-4">📦 Produtos da API com Fórmulas</h2>
-
-  <div class="mb-3">
-    <input type="text" id="filtroVariaveis" class="form-control" placeholder="🔍 Buscar variáveis...">
+<div class="main-flex-container">
+  <div class="main-content">
+    <h2 class="mb-4">📦 Produtos da API com Fórmulas</h2>
+    <div class="mt-4 d-flex gap-3">
+      <button class="btn btn-primary" onclick="atualizarTodosProdutos()">🔄 Atualizar todos</button>
+      <button class="btn btn-success" onclick="gerarJsonCadastro()">📄 Gerar JSON de Cadastro de Produtos</button>
+    </div>
+    <br><br>
+    <div class="mb-3">
+      <input type="text" id="filtroVariaveis" class="form-control" placeholder="🔍 Buscar variáveis...">
+    </div>
+    <div id="variaveisContainer" class="mb-4">
+      <h5>🔧 Produtos como Variáveis</h5>
+      <div id="pillsVariaveis" class="variaveis-tags"></div>
+    </div>
+    <div class="mb-3">
+      <input type="text" id="filtroProdutos" class="form-control" placeholder="🔍 Buscar produtos por nome ou código...">
+    </div>
+    <div class="accordion" id="produtosAccordion"></div>
   </div>
-  <div id="variaveisContainer" class="mb-4">
-    <h5>🔧 Produtos como Variáveis</h5>
-    <div id="pillsVariaveis" class="variaveis-tags"></div>
+  <div id="sidebar-formulas">
+    <div style="font-weight:700;font-size:1.1em;color:#0d6efd;margin-bottom:18px;letter-spacing:.02em">
+      🧮 Produtos com Fórmula
+    </div>
+    <div id="sidebar-formulas-list"></div>
   </div>
+</div>
 
-  <div class="mb-3">
-    <input type="text" id="filtroProdutos" class="form-control" placeholder="🔍 Buscar produtos por nome ou código...">
-  </div>
-  <div class="accordion" id="produtosAccordion"></div>
+<script>
+  const variaveis = new Map();
+  let produtosAPI = [];
+  const formulasPreenchidas = {}; // Para salvar as fórmulas por produto
 
-  <div class="mt-4 d-flex gap-3">
-    <button class="btn btn-primary" onclick="atualizarTodosProdutos()">🔄 Atualizar todos</button>
-    <button class="btn btn-success" onclick="gerarJsonCadastro()">📄 Gerar JSON de Cadastro de Produtos</button>
-  </div>
+  async function carregarProdutosDaAPI() {
+    const resposta = await fetch("https://ulhoa-0a02024d350a.herokuapp.com/produtos/visualizar");
+    produtosAPI = await resposta.json();
+    renderizarProdutos(produtosAPI);
+  }
 
-  <script>
-    const variaveis = new Map();
-    let produtosAPI = [];
+  function gerarCodigoAleatorio() {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+  }
 
-    async function carregarProdutosDaAPI() {
-      const resposta = await fetch("https://ulhoa-0a02024d350a.herokuapp.com/produtos/visualizar");
-      produtosAPI = await resposta.json();
-      renderizarProdutos(produtosAPI);
-    }
+  function renderizarProdutos(produtos) {
+    const accordion = document.getElementById("produtosAccordion");
+    accordion.innerHTML = "";
+    variaveis.clear();
+    document.getElementById("pillsVariaveis").innerHTML = "";
 
-    function gerarCodigoAleatorio() {
-      return Math.random().toString(36).substring(2, 8).toUpperCase();
-    }
+    produtos.forEach((prod, index) => {
+      const tag = `#${prod.codigo}`;
+      variaveis.set(tag, prod.valor_unitario);
 
-    function renderizarProdutos(produtos) {
-      const accordion = document.getElementById("produtosAccordion");
-      accordion.innerHTML = "";
-      variaveis.clear();
-      document.getElementById("pillsVariaveis").innerHTML = "";
+      if (document.getElementById("filtroVariaveis").value.length >= 3) {
+        const span = document.createElement("span");
+        span.className = "variavel-pill";
+        span.textContent = `${tag} = ${prod.valor_unitario}`;
+        document.getElementById("pillsVariaveis").appendChild(span);
+      }
 
-      produtos.forEach((prod, index) => {
-        const tag = `#${prod.codigo}`;
-        variaveis.set(tag, prod.valor_unitario);
+      const id = `produto-${index}`;
+      const headerId = `${id}-header`;
+      const collapseId = `${id}-body`;
 
-        if (document.getElementById("filtroVariaveis").value.length >= 3) {
-          const span = document.createElement("span");
-          span.className = "variavel-pill";
-          span.textContent = `${tag} = ${prod.valor_unitario}`;
-          document.getElementById("pillsVariaveis").appendChild(span);
-        }
+      const card = document.createElement("div");
+      card.className = "accordion-item";
 
-        const id = `produto-${index}`;
-        const headerId = `${id}-header`;
-        const collapseId = `${id}-body`;
-
-        const card = document.createElement("div");
-        card.className = "accordion-item";
-
-        card.innerHTML = `
-          <h2 class="accordion-header" id="${headerId}">
-            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}">
-              ${prod.codigo} — ${prod.descricao || "Sem descrição"}
-            </button>
-          </h2>
-          <div id="${collapseId}" class="accordion-collapse collapse" data-bs-parent="#produtosAccordion">
-            <div class="accordion-body">
-              <div class="row g-3 mb-2 align-items-end">
-                <div class="col-md-6">
-                  <label class="form-label">Fórmula</label>
-                  <textarea class="form-control formula" data-codigo="${prod.codigo}"></textarea>
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label">Valor Final</label>
-                  <input type="number" class="form-control valor-final" readonly />
-                </div>
+      card.innerHTML = `
+        <h2 class="accordion-header" id="${headerId}">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}">
+            ${prod.codigo} — ${prod.descricao || "Sem descrição"}
+          </button>
+        </h2>
+        <div id="${collapseId}" class="accordion-collapse collapse" data-bs-parent="#produtosAccordion">
+          <div class="accordion-body">
+            <div class="row g-3 mb-2 align-items-end">
+              <div class="col-md-6">
+                <label class="form-label">Fórmula</label>
+                <textarea class="form-control formula" data-codigo="${prod.codigo}"></textarea>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Valor Final</label>
+                <input type="number" class="form-control valor-final" readonly />
               </div>
             </div>
           </div>
-        `;
+        </div>
+      `;
 
-        accordion.appendChild(card);
+      accordion.appendChild(card);
+    });
+
+    adicionarEventosDeFormula();
+  }
+
+  function adicionarEventosDeFormula() {
+    document.querySelectorAll("textarea.formula").forEach(textarea => {
+      // Restaura fórmula se já foi salva antes:
+      const codigo = textarea.dataset.codigo;
+      if (formulasPreenchidas[codigo]) {
+        textarea.value = formulasPreenchidas[codigo].formula;
+        const campoVal = textarea.closest(".accordion-body").querySelector(".valor-final");
+        campoVal.value = formulasPreenchidas[codigo].valor || "";
+      }
+
+      textarea.addEventListener("input", () => {
+        const campoVal = textarea.closest(".accordion-body").querySelector(".valor-final");
+        let resultado = "";
+        try {
+          const expr = textarea.value.replace(/#[a-zA-Z0-9_ ]+/g, match => {
+            const v = variaveis.get(match);
+            if (v == null) throw `Variável ${match} indefinida`;
+            return v;
+          });
+          const val = eval(expr);
+          resultado = isNaN(val) ? "" : parseFloat(val).toFixed(2);
+        } catch (err) {
+          resultado = "";
+        }
+        campoVal.value = resultado;
+        // Salva fórmula e valor
+        formulasPreenchidas[codigo] = {
+          formula: textarea.value,
+          valor: resultado
+        };
+        atualizarSidebarFormulas();
       });
+    });
+    atualizarSidebarFormulas();
+  }
 
-      adicionarEventosDeFormula();
-    }
+function atualizarSidebarFormulas() {
+  const lista = document.getElementById("sidebar-formulas-list");
+  lista.innerHTML = "";
 
-    function adicionarEventosDeFormula() {
-      document.querySelectorAll("textarea.formula").forEach(textarea => {
-        textarea.addEventListener("input", () => {
-          const campoVal = textarea.closest(".accordion-body").querySelector(".valor-final");
-          let resultado = "";
-          try {
-            const expr = textarea.value.replace(/#[a-zA-Z0-9_ ]+/g, match => {
-              const v = variaveis.get(match);
-              if (v == null) throw `Variável ${match} indefinida`;
-              return v;
-            });
-            const val = eval(expr);
-            resultado = isNaN(val) ? "" : parseFloat(val).toFixed(2);
-          } catch (err) {
-            resultado = "";
-          }
-          campoVal.value = resultado;
-        });
-      });
-    }
+  // Mostra TODOS produtos que têm fórmula salva (mesmo que não estejam no DOM)
+  Object.entries(formulasPreenchidas).forEach(([codigo, obj]) => {
+    if (!obj.formula || !obj.valor) return; // só mostra se houver fórmula e valor calculado
 
-    function atualizarTodosProdutos() {
-      const todos = [];
-      document.querySelectorAll(".accordion-item").forEach(item => {
-        const obj = calcularProduto(item);
-        if (obj) todos.push(obj);
-      });
-      console.log("📦 Todos os produtos calculados:", todos);
-    }
+    // Tenta achar info do produto
+    const produto = produtosAPI.find(p => p.codigo === codigo);
+    const descricao = produto ? (produto.descricao || "Sem descrição") : "";
+    const corValor = isNaN(Number(obj.valor)) ? "#888" : "#198754";
+    const box = document.createElement("div");
+    box.style = "border-radius:7px;padding:11px 9px 8px 11px;background:#f7faff;margin-bottom:11px;box-shadow:0 2px 6px #0001;display:flex;flex-direction:column;gap:4px;";
+    box.innerHTML = `
+      <div style="font-weight:600;color:#375;">${codigo}</div>
+      <div style="font-size:.98em;color:#213;">${descricao}</div>
+      <div style="margin-top:2px;">
+        <span style="background:#0d6efd;color:#fff;border-radius:10px;padding:2px 12px 2px 10px;font-size:.93em;">Fórmula</span>
+        <span style="font-family:monospace;font-size:.92em;color:#234;margin-left:4px">${obj.formula}</span>
+      </div>
+      <div style="color:${corValor};font-size:1.15em;font-weight:600;margin-top:2px;">
+        = R$ ${Number(obj.valor).toFixed(2).replace('.', ',')}
+      </div>
+    `;
+    lista.appendChild(box);
+  });
+}
 
-    function calcularProduto(item) {
-      const formula = item.querySelector("textarea.formula");
-      const campoVal = item.querySelector(".valor-final");
-      const valorCalculado = parseFloat(campoVal.value) || 0;
+  function atualizarTodosProdutos() {
+    const todos = [];
+    document.querySelectorAll(".accordion-item").forEach(item => {
+      const obj = calcularProduto(item);
+      if (obj) todos.push(obj);
+    });
+    console.log("📦 Todos os produtos calculados:", todos);
+  }
 
-      const codigoTexto = item.querySelector(".accordion-button").textContent.trim();
-      const [codigo, ...descricaoArr] = codigoTexto.split("—");
-      const descricao = descricaoArr.join("—").trim().replace(/&quot;/g, '"');
+  function calcularProduto(item) {
+    const formula = item.querySelector("textarea.formula");
+    const campoVal = item.querySelector(".valor-final");
+    const valorCalculado = parseFloat(campoVal.value) || 0;
 
-      const produtoOriginal = produtosAPI.find(p => p.codigo === codigo.trim());
-      if (!produtoOriginal) return null;
+    const codigoTexto = item.querySelector(".accordion-button").textContent.trim();
+    const [codigo, ...descricaoArr] = codigoTexto.split("—");
+    const descricao = descricaoArr.join("—").trim().replace(/&quot;/g, '"');
 
-      return {
-        codigo_produto_integracao: gerarCodigoAleatorio(),
-        codigo: produtoOriginal.codigo,
-        descricao: descricao,
-        unidade: produtoOriginal.unidade,
-        ncm: produtoOriginal.ncm,
-        valor_unitario: valorCalculado
-      };
-    }
+    const produtoOriginal = produtosAPI.find(p => p.codigo === codigo.trim());
+    if (!produtoOriginal) return null;
 
-    function gerarJsonCadastro() {
-      const produtosCadastro = [];
+    return {
+      codigo_produto_integracao: gerarCodigoAleatorio(),
+      codigo: produtoOriginal.codigo,
+      descricao: descricao,
+      unidade: produtoOriginal.unidade,
+      ncm: produtoOriginal.ncm,
+      valor_unitario: valorCalculado
+    };
+  }
 
-      document.querySelectorAll(".accordion-item").forEach(item => {
-        const produto = calcularProduto(item);
-        if (produto) produtosCadastro.push(produto);
-      });
+  function gerarJsonCadastro() {
+    const produtosCadastro = [];
+    document.querySelectorAll(".accordion-item").forEach(item => {
+      const produto = calcularProduto(item);
+      if (produto) produtosCadastro.push(produto);
+    });
+    const jsonFinal = {
+      lote: 123,
+      produto_servico_cadastro: produtosCadastro
+    };
+    console.log("📄 JSON de Cadastro:", jsonFinal);
+  }
 
-      const jsonFinal = {
-        lote: 123,
-        produto_servico_cadastro: produtosCadastro
-      };
-
-      console.log("📄 JSON de Cadastro:", jsonFinal);
-    }
-
-    document.getElementById("filtroVariaveis").addEventListener("input", function () {
-      const termo = this.value.toLowerCase();
-      const container = document.getElementById("pillsVariaveis");
-      container.innerHTML = "";
-      if (termo.length >= 3) {
-        for (const [nome, valor] of variaveis.entries()) {
-          if (nome.toLowerCase().includes(termo)) {
-            const span = document.createElement("span");
-            span.className = "variavel-pill";
-            span.textContent = `${nome} = ${valor}`;
-            container.appendChild(span);
-          }
+  document.getElementById("filtroVariaveis").addEventListener("input", function () {
+    const termo = this.value.toLowerCase();
+    const container = document.getElementById("pillsVariaveis");
+    container.innerHTML = "";
+    if (termo.length >= 3) {
+      for (const [nome, valor] of variaveis.entries()) {
+        if (nome.toLowerCase().includes(termo)) {
+          const span = document.createElement("span");
+          span.className = "variavel-pill";
+          span.textContent = `${nome} = ${valor}`;
+          container.appendChild(span);
         }
       }
-    });
+    }
+  });
 
-    document.getElementById("filtroProdutos").addEventListener("input", function () {
-      const termo = this.value.toLowerCase();
-      const filtrados = produtosAPI.filter(p => `${p.codigo} ${p.descricao}`.toLowerCase().includes(termo));
-      renderizarProdutos(filtrados);
-    });
+  document.getElementById("filtroProdutos").addEventListener("input", function () {
+    const termo = this.value.toLowerCase();
+    const filtrados = produtosAPI.filter(p => `${p.codigo} ${p.descricao}`.toLowerCase().includes(termo));
+    renderizarProdutos(filtrados);
+  });
 
-    document.addEventListener("DOMContentLoaded", carregarProdutosDaAPI);
-  </script>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  document.addEventListener("DOMContentLoaded", carregarProdutosDaAPI);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

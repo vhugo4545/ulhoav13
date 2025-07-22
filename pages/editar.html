@@ -29,12 +29,11 @@
   </button>
 
 
+<button id="btn-planilha-custos" class="sidebar-button" onclick="gerarPlanilhaCustos()">
+  <span class="material-icons-outlined">table_chart</span><br><P></P>Planilha de Custos
+</button>
 
-
-  <button id="btn-atualizar" class="sidebar-button" onclick="atualizarPropostaEditavel()">
-    <span class="material-icons-outlined">edit</span><br>  Atualizar (Salvar)
-  </button>
-
+  
   <button id="btn-solicitar" class="sidebar-button" onclick="marcarPendenteAprovacao()">
     <span class="material-icons-outlined">assignment_turned_in</span><br> Solicitar Aprovação
   </button>
@@ -43,8 +42,14 @@
     <span class="material-icons-outlined">verified_user</span><br>  Autorizar Proposta
   </button>
 
+ <button id="btn-visualizar-proposta" class="sidebar-button" onclick="gerarOrcamentoParaImpressaoCompleta()">
+  <span class="material-icons-outlined">visibility</span><br><P></P>  Visualizar Proposta
+</button>
+
+
+
   <button id="btn-enviar-cliente" class="sidebar-button" onclick="marcarEnviadoParaCliente()">
-    <span class="material-icons-outlined">send</span><br>  Enviar Proposta
+    <span class="material-icons-outlined">send</span><br> Enviar Proposta
   </button>
 
   <button id="btn-aprovado-cliente" class="sidebar-button" onclick="marcarAprovadoPeloCliente()">
@@ -243,7 +248,7 @@
               <div class="accordion-body">
                 <div class="mb-3">
                   <label class="form-label">Prazos por Área</label>
-                  <textarea class="form-control" id="prazosArea" rows="2"
+                  <textarea class="form-control" id="prazosArea" rows="5"
                     placeholder="Área ___: ___ dias úteis após aprovação..."></textarea>
                 </div>
 
@@ -418,6 +423,7 @@
   <script src="../js/visualizarBotoes.js" defer></script>
   <script src="../js/envioOmie.js" defer></script>
   <script src="../js/totais.js" defer></script>
+  <script src="../js/conferencia.js" defer></script>
   <script>
     function fecharTodasSanfonas() {
       document.querySelectorAll(".accordion-button").forEach(botao => {

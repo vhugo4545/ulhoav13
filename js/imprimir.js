@@ -1,3 +1,4 @@
+// 1. Função principal: chamada pelo botão "Visualizar Proposta"
 function gerarOrcamentoParaImpressaoCompleta() {
   const idsObrigatorios = [
     "numeroOrcamento", "dataOrcamento", "origemCliente",
@@ -25,8 +26,146 @@ function gerarOrcamentoParaImpressaoCompleta() {
     if (!continuar) return;
   }
 
-  const getValue = id => document.getElementById(id)?.value || "-";
+  // Captura lista de grupos/blocos para montar popup
+  const grupos = [];
+  document.querySelectorAll("table[id^='tabela-bloco-']").forEach(tabela => {
+    const grupoId = tabela.id.replace("tabela-", "");
+    const inputAmbiente = document.querySelector(`input[data-id-grupo='${grupoId}'][placeholder='Ambiente']`);
+    const nomeAmbiente = inputAmbiente?.value.trim() || "Sem Ambiente";
+    const linhaProduto = tabela.querySelector("tbody tr");
+    let nomeProduto = "";
+    if (linhaProduto) {
+      const colunas = linhaProduto.querySelectorAll("td");
+      nomeProduto = (colunas[1]?.textContent || colunas[0]?.textContent || "").trim();
+    }
+    const totalGrupo = parseFloat(
+      tabela.querySelector("tfoot td[colspan='6'] strong")?.textContent.replace(/[^\d,\.]/g, '').replace(',', '.') || "0"
+    );
+    grupos.push({
+      grupoId, nomeAmbiente, totalGrupo, nomeProduto
+    });
+  });
 
+  // Valor final com desconto (para mostrar no popup)
+  const valorFinalComDescontoStr = document.getElementById("valorFinalTotal")?.textContent || "R$ 0,00";
+  const valorFinalComDesconto = parseFloat(valorFinalComDescontoStr.replace(/[^\d,\.]/g, "").replace(",", "."));
+
+  // Exibe popup e chama impressão quando confirmar
+  mostrarPopupSelecaoGruposEstetico(grupos, valorFinalComDesconto, function(gruposOcultarProduto) {
+    gerarHTMLParaImpressao(gruposOcultarProduto);
+  });
+}
+
+// 2. Função de popup estético para ocultar produtos
+function mostrarPopupSelecaoGruposEstetico(grupos, valorFinal, onConfirmar) {
+  // CSS do popup (apenas uma vez)
+  if (!document.getElementById("estetico-popup-style")) {
+    const style = document.createElement("style");
+    style.id = "estetico-popup-style";
+    style.innerHTML = `
+#popup-overlay-custom {
+  position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;
+  background:rgba(34,37,51,0.79);display:flex;align-items:center;justify-content:center;
+  animation:popupfadein .12s;
+}
+@keyframes popupfadein{from{opacity:0}to{opacity:1}}
+#popup-modal-custom {
+  background:#fff;border-radius:15px;box-shadow:0 6px 38px #1118;
+  padding:0;min-width:320px;max-width:430px;width:98%;overflow:hidden;max-height:96vh;display:flex;flex-direction:column;
+}
+#popup-modal-custom .header {
+  background:linear-gradient(90deg,#377dff 0,#2a4d94 100%);
+  color:#fff;padding:20px 25px 14px 25px;border-radius:15px 15px 0 0;
+  font-size:1.22rem;font-weight:600;letter-spacing:.01em;box-shadow:0 2px 16px #2132;
+}
+#popup-modal-custom .body {
+  padding:22px 18px 7px 22px;flex:1;overflow-y:auto;max-height:400px;
+}
+#popup-modal-custom .grupo-row {
+  display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:9px;border-bottom:1px solid #f2f4f7;
+  padding-bottom:10px;
+}
+#popup-modal-custom .grupo-row:last-child{border-bottom:0}
+#popup-modal-custom .grupo-info strong{font-size:1.07em;}
+#popup-modal-custom .grupo-info {flex:1;}
+#popup-modal-custom .grupo-info .produto{color:#222;font-size:.96em;}
+#popup-modal-custom .grupo-info .valor{color:#2a4d94;font-size:.99em;font-weight:600;}
+#popup-modal-custom .grupo-checkbox {margin-left:8px;white-space:nowrap;min-width:125px;}
+#popup-modal-custom .footer {
+  border-top:1px solid #f4f6fa;padding:14px 22px 18px 22px;display:flex;flex-direction:column;align-items:flex-end;background:#f8fafb;
+}
+#popup-modal-custom .footer .total {
+  font-weight:bold;font-size:1.09em;color:#345;letter-spacing:.01em;margin-bottom:5px;
+}
+#popup-modal-custom .btn-row {
+  display:flex;gap:11px;margin-top:10px;
+}
+#popup-modal-custom button {
+  padding:8px 24px;border-radius:8px;border:none;outline:none;font-size:1em;
+  font-weight:500;cursor:pointer;transition:background .16s;
+}
+#popup-modal-custom .btn-cancelar {background:#f2f2f2;color:#234;}
+#popup-modal-custom .btn-cancelar:hover {background:#ececec;}
+#popup-modal-custom .btn-confirmar {background:#377dff;color:#fff;}
+#popup-modal-custom .btn-confirmar:hover {background:#2656af;}
+    `;
+    document.head.appendChild(style);
+  }
+
+  // HTML do popup
+  let overlay = document.getElementById("popup-overlay-custom");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "popup-overlay-custom";
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML = `
+    <div id="popup-modal-custom" tabindex="0">
+      <div class="header">Opções de Impressão dos Ambientes</div>
+      <form class="body" id="form-opcoes-grupos-custom">
+        ${grupos.map(g => `
+        <div class="grupo-row">
+          <div class="grupo-info">
+            <strong>${g.nomeAmbiente}</strong>
+            <div class="valor">R$ ${g.totalGrupo.toFixed(2).replace('.', ',')}</div>
+            <div class="produto">${g.nomeProduto ? `<span style="color:#375;">Produto:</span> ${g.nomeProduto}` : ''}</div>
+          </div>
+          <label class="grupo-checkbox">
+            <input type="checkbox" name="ocultarProduto" data-grupoid="${g.grupoId}" checked>
+            <span style="font-size:.99em;">Ocultar produto principal</span>
+          </label>
+        </div>`).join('')}
+      </form>
+      <div class="footer">
+        <div class="total">Valor Final Geral: R$ ${valorFinal.toFixed(2).replace('.', ',')}</div>
+        <div class="btn-row">
+          <button type="button" class="btn-cancelar" id="btnCancelarModalCustom">Cancelar</button>
+          <button type="button" class="btn-confirmar" id="btnConfirmarModalCustom">Visualizar</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  overlay.style.display = "flex";
+  overlay.querySelector("#popup-modal-custom").focus();
+
+  overlay.querySelector("#btnCancelarModalCustom").onclick = function() {
+    overlay.style.display = "none";
+  };
+  overlay.querySelector("#btnConfirmarModalCustom").onclick = function() {
+    const checkboxes = overlay.querySelectorAll("input[name='ocultarProduto']");
+    const opcoes = {};
+    checkboxes.forEach(cb => {
+      opcoes[cb.dataset.grupoid] = cb.checked;
+    });
+    overlay.style.display = "none";
+    onConfirmar(opcoes);
+  };
+}
+
+// 3. Função que realmente gera o HTML da impressão
+function gerarHTMLParaImpressao(gruposOcultarProduto) {
+  const getValue = id => document.getElementById(id)?.value || "-";
   const dados = {
     numero: getValue("numeroOrcamento"),
     data: new Date(getValue("dataOrcamento")).toLocaleDateString('pt-BR'),
@@ -37,9 +176,9 @@ function gerarOrcamentoParaImpressaoCompleta() {
     emailOrigem: getValue("emailOrigem"),
     comissao: getValue("comissaoArquiteto"),
     operador: getValue("operadorInterno"),
-    enderecoObra: `Rua/Avenida: ${getValue("rua")}, Número: ${getValue("numero")}, Bairro: ${getValue("bairro")} - Complemento: ${getValue("complemento")} - Cidade: ${getValue("cidade")}/${getValue("estado")} - CEP: ${getValue("cep")}`,  prazos: getValue("prazosArea"),
-   condicao: document.getElementById("condicaoPagamento")?.selectedOptions[0]?.textContent.trim() || "-",
-
+    enderecoObra: `Rua/Avenida: ${getValue("rua")}, Número: ${getValue("numero")}, Bairro: ${getValue("bairro")} - Complemento: ${getValue("complemento")} - Cidade: ${getValue("cidade")}/${getValue("estado")} - CEP: ${getValue("cep")}`,
+    prazos: getValue("prazosArea"),
+    condicao: document.getElementById("condicaoPagamento")?.selectedOptions[0]?.textContent.trim() || "-",
     condicoesGerais: getValue("condicoesGerais"),
     vendedor: document.getElementById("vendedorResponsavel")?.selectedOptions[0]?.textContent || "-"
   };
@@ -49,48 +188,106 @@ function gerarOrcamentoParaImpressaoCompleta() {
   dados.cpfCnpj = clienteWrapper?.querySelector(".cpfCnpj")?.value || "-";
   dados.telefoneCliente = clienteWrapper?.querySelector(".telefoneCliente")?.value || "-";
 
-  let totalGeral = 0;
-  let corpoHTML = "";
-
+  // 1. Monta lista de grupos com ambiente
+  let gruposDados = [];
   document.querySelectorAll("table[id^='tabela-bloco-']").forEach(tabela => {
     const grupoId = tabela.id.replace("tabela-", "");
     const inputAmbiente = document.querySelector(`input[data-id-grupo='${grupoId}'][placeholder='Ambiente']`);
     const nomeAmbiente = inputAmbiente?.value.trim() || "Sem Ambiente";
-
     const linhaProduto = tabela.querySelector("tbody tr");
-    if (!linhaProduto) return;
-
-    const colunas = linhaProduto.querySelectorAll("td");
-    const descricao = colunas[1]?.textContent.trim() || "-";
-    const qtd = linhaProduto.querySelector("input.quantidade")?.value || "1";
-
     const resumoGrupo = document.getElementById(`resumo-${grupoId}`)?.value?.trim() || "";
-
     const totalGrupo = parseFloat(
       tabela.querySelector("tfoot td[colspan='6'] strong")?.textContent.replace(/[^\d,\.]/g, '').replace(',', '.') || "0"
     );
-
-    corpoHTML += `
-      <div class="mt-4 border">
-        <div class="fw-bold border p-2 bg-light text-center">AMBIENTE: ${nomeAmbiente.toUpperCase()}</div>
-        <table class="table table-sm table-bordered w-100">
-          <thead class="table-light">
-            <tr><th>Descrição</th><th>Quantidade</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>${descricao}</td>
-              <td>${qtd}</td>
-            </tr>
-            ${resumoGrupo ? `<tr><td colspan="2"><em> ${resumoGrupo}</em></td></tr>` : ""}
-          </tbody>
-        </table>
-        <div class="border p-2 text-end fw-bold bg-light">Total do Ambiente: R$ ${totalGrupo.toFixed(2).replace('.', ',')}</div>
-      </div>`;
-
-    totalGeral += totalGrupo;
+    let colunas = linhaProduto?.querySelectorAll("td");
+    let descricao = colunas?.[1]?.textContent.trim() || "-";
+    let qtd = linhaProduto?.querySelector("input.quantidade")?.value || "1";
+    gruposDados.push({
+      grupoId, nomeAmbiente, totalGrupo, descricao, qtd, resumoGrupo, ocultar: !gruposOcultarProduto[grupoId]
+    });
   });
 
+  // 2. Agrupa por ambiente
+  let ambientes = {};
+  gruposDados.forEach(g => {
+    if (!ambientes[g.nomeAmbiente]) ambientes[g.nomeAmbiente] = [];
+    ambientes[g.nomeAmbiente].push(g);
+  });
+
+  let totalGeral = 0;
+  let corpoHTML = "";
+
+  // Para o resumo no final
+  let ambienteTotais = [];
+
+  // 3. Para cada ambiente
+  Object.entries(ambientes).forEach(([nomeAmbiente, grupos]) => {
+    // Se todos os grupos do ambiente estão ocultos, obriga mostrar o primeiro!
+    const existemVisiveis = grupos.some(g => !g.ocultar);
+    const valorTotalAmbiente = grupos.reduce((soma, x) => soma + x.totalGrupo, 0);
+
+    // Lista dos grupos que serão impressos desse ambiente
+    let gruposParaImprimir = grupos.filter(g => !g.ocultar);
+
+    // Se nenhum grupo visível, força mostrar o primeiro
+    if (gruposParaImprimir.length === 0) gruposParaImprimir = [grupos[0]];
+
+    // Só soma o valor total do ambiente UMA vez!
+    totalGeral += valorTotalAmbiente;
+
+    // Registra total do ambiente para o resumo
+    ambienteTotais.push({
+      nome: nomeAmbiente,
+      total: valorTotalAmbiente
+    });
+
+    // Monta todos os blocos do ambiente, sem mostrar total de ambiente em cada bloco
+    gruposParaImprimir.forEach((g, i) => {
+      corpoHTML += `
+        <div class="mt-4 border">
+          <div class="fw-bold border p-2 bg-light text-center">AMBIENTE: ${nomeAmbiente.toUpperCase()}</div>
+          <table class="table table-sm table-bordered w-100">
+            <thead class="table-light">
+              <tr><th>Descrição</th><th>Quantidade</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>${g.descricao}</td>
+                <td>${g.qtd}</td>
+              </tr>
+              ${g.resumoGrupo ? `<tr><td colspan="2"><em> ${g.resumoGrupo}</em></td></tr>` : ""}
+            </tbody>
+          </table>
+        </div>`;
+    });
+  });
+
+  // Tabela de resumo dos ambientes
+  corpoHTML += `
+    <div class="border p-3 mt-4">
+      <h5 class="mb-3" style="font-size:1.11em">Resumo dos Totais por Ambiente</h5>
+      <table class="table table-bordered table-sm w-100 mb-0">
+        <thead>
+          <tr>
+            <th style="width:40%">Total do Ambiente</th>
+            <th>Ambiente</th>
+            <th style="width:22%">Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${ambienteTotais.map(a => `
+            <tr>
+              <td><strong>Total do Ambiente</strong></td>
+              <td>${a.nome}</td>
+              <td><strong>R$ ${a.total.toFixed(2).replace('.', ',')}</strong></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  // Totalizadores gerais
   const valorFinalComDescontoStr = document.getElementById("valorFinalTotal")?.textContent || "R$ 0,00";
   const valorFinalComDesconto = parseFloat(valorFinalComDescontoStr.replace(/[^\d,\.]/g, "").replace(",", "."));
   const campoDesconto = document.getElementById("campoDescontoFinal")?.value?.trim();
@@ -108,17 +305,16 @@ function gerarOrcamentoParaImpressaoCompleta() {
     </div>`;
 
   const condicoesGeraisFormatada = (dados.condicoesGerais || "")
-  .replace(/•/g, "<br>•");
+    .replace(/•/g, "<br>•");
 
-corpoHTML += `
-  <div class="border p-2 mt-3">
-    <strong>Prazo:</strong><br>${dados.prazos}<br><br>
-    <strong>Condições de Pagamento:</strong><br>${dados.condicao}<br><br>
-    <strong>Condições Gerais:</strong><br>${condicoesGeraisFormatada}
-    <br>
-  </div>
-`;
-
+  corpoHTML += `
+    <div class="border p-2 mt-3">
+      <strong>Prazo:</strong><br>${dados.prazos}<br><br>
+      <strong>Condições de Pagamento:</strong><br>${dados.condicao}<br><br>
+      <strong>Condições Gerais:</strong><br>${condicoesGeraisFormatada}
+      <br>
+    </div>
+  `;
 
   const htmlCompleto = `
     <html>
@@ -158,11 +354,11 @@ corpoHTML += `
             <tr><td><strong>Operador:</strong></td><td>${dados.operador}</td></tr>
           </table>
         </div>
-
         ${corpoHTML}
       </body>
     </html>`;
 
+  // Abre a janela de impressão normalmente
   async function abrirJanelaParaImpressao(htmlCompleto) {
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
@@ -177,6 +373,5 @@ corpoHTML += `
       printWindow.print();
     };
   }
-
   abrirJanelaParaImpressao(htmlCompleto);
 }

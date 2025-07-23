@@ -163,6 +163,10 @@ function mostrarPopupSelecaoGruposEstetico(grupos, valorFinal, onConfirmar) {
   };
 }
 
+
+
+
+
 // 3. Função que realmente gera o HTML da impressão
 function gerarHTMLParaImpressao(gruposOcultarProduto) {
   const getValue = id => document.getElementById(id)?.value || "-";
@@ -183,10 +187,35 @@ function gerarHTMLParaImpressao(gruposOcultarProduto) {
     vendedor: document.getElementById("vendedorResponsavel")?.selectedOptions[0]?.textContent || "-"
   };
 
-  const clienteWrapper = document.querySelector(".cliente-item");
-  dados.nomeCliente = clienteWrapper?.querySelector(".razaoSocial")?.value || "-";
-  dados.cpfCnpj = clienteWrapper?.querySelector(".cpfCnpj")?.value || "-";
-  dados.telefoneCliente = clienteWrapper?.querySelector(".telefoneCliente")?.value || "-";
+const clienteWrapper = document.querySelector(".cliente-item");
+dados.nomeCliente = clienteWrapper?.querySelector(".razaoSocial")?.value?.trim() || "-";
+dados.cpfCnpj = clienteWrapper?.querySelector(".cpfCnpj")?.value?.trim() || "-";
+
+// Busca telefone cliente (input ou texto)
+let telefoneCliente = "-";
+let telClienteEl = clienteWrapper?.querySelector(".telefoneCliente");
+if (telClienteEl) {
+  if (telClienteEl.value && telClienteEl.value.trim()) {
+    telefoneCliente = telClienteEl.value.trim();
+  } else if (telClienteEl.textContent && telClienteEl.textContent.trim()) {
+    telefoneCliente = telClienteEl.textContent.trim();
+  }
+}
+dados.telefoneCliente = telefoneCliente;
+
+// Nome do contato
+let nomeContato = clienteWrapper?.querySelector(".nomeContato")?.value?.trim() || "-";
+
+// (Opcional: se quiser o telefone do contato separado)
+let telefoneContato = telefoneCliente;
+
+// Monta "Contato Responsável" no padrão: Nome do Contato - Telefone
+if (nomeContato !== "-" || telefoneContato !== "-") {
+  dados.contatoResponsavel = `${nomeContato} - ${telefoneContato}`;
+} else {
+  dados.contatoResponsavel = "-";
+}
+
 
   // 1. Monta lista de grupos com ambiente
   let gruposDados = [];

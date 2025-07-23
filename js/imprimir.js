@@ -224,8 +224,9 @@ if (nomeContato !== "-" || telefoneContato !== "-") {
     const inputAmbiente = document.querySelector(`input[data-id-grupo='${grupoId}'][placeholder='Ambiente']`);
     const nomeAmbiente = inputAmbiente?.value.trim() || "Sem Ambiente";
     const linhaProduto = tabela.querySelector("tbody tr");
-    const resumoGrupo = document.getElementById(`resumo-${grupoId}`)?.value?.trim() || "";
-    const totalGrupo = parseFloat(
+   let resumoGrupo = document.getElementById(`resumo-${grupoId}`)?.value?.trim() || "";
+resumoGrupo = resumoGrupo.replace(/\n/g, "<br>");
+ const totalGrupo = parseFloat(
       tabela.querySelector("tfoot td[colspan='6'] strong")?.textContent.replace(/[^\d,\.]/g, '').replace(',', '.') || "0"
     );
     let colunas = linhaProduto?.querySelectorAll("td");
@@ -361,7 +362,7 @@ if (nomeContato !== "-" || telefoneContato !== "-") {
             <tr>
               <td style="width:40%;text-align:center;vertical-align:middle;">
                 <img src="../js/logo.jpg" style="max-height:65px;"><br><br>
-                CNPJ: 02.836.048/0001-60 <br>(31) (31) 3332- 0616 / (31) 3271-9449<br>
+                CNPJ: 02.836.048/0001-60 <br>(31) 3332- 0616 / (31) 3271-9449<br>
               </td>
               <td style="width:40%;">
                 <table class="table table-sm w-100">

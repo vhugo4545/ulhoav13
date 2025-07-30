@@ -610,7 +610,7 @@ function criarBlocoDeProposta(nomeGrupo = "", ambiente = "") {
   if (window.location.pathname.includes("criar.html")) {
     setTimeout(() => {
       atualizarPrecosOmieNaDOM();
-      ativarInputsDescricaoComDelay();
+    //  ativarInputsDescricaoComDelay();
     }, 1000);
   }
 

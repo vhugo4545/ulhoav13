@@ -108,30 +108,57 @@ function abrirSubstituirProduto(botao) {
 }
 
 
+function normalizarTextoFlex(texto) {
+  return (texto || "")
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+    .toLowerCase()
+    .replace(/["']/g, '')            // Remove aspas
+    .replace(/[\s\-–—_.,/]+/g, ' ')  // Troca tudo que separa por espaço único
+    .replace(/\s+/g, ' ')            // Múltiplos espaços viram um só
+    .trim();
+}
+
 function mostrarSugestoes(input, idSuffix) {
-  const termo = input.value.trim().toLowerCase();
+  const termoOriginal = input.value.trim();
+  const termoNorm = normalizarTextoFlex(termoOriginal);
+
+  const termos = termoNorm.split(' ').filter(Boolean); // Cada palavra da busca
   const container = document.getElementById(`sugestoes-${idSuffix}`);
   if (!container) return;
-  if (termo.length < 3) {
+  if (termoNorm.length < 3) {
     container.innerHTML = '';
     return;
   }
-  const resultados = todosProdutos
-    .filter(prod => (prod.descricao || '').toLowerCase().includes(termo))
-    .slice(0, 6);
+
+ 
+  const resultados = todosProdutos.filter(prod => {
+    const descNorm = normalizarTextoFlex(prod.descricao);
+    const corresponde = termos.every(term => descNorm.includes(term));
+    console.log(
+      `[${corresponde ? "✔️" : "❌"}] "${prod.descricao}" (${descNorm}) contém todos:`, termos, '=>', corresponde
+    );
+    return corresponde;
+  }).slice(0, 6);
+
   sugestoesTemp[idSuffix] = resultados;
+
+ 
   container.innerHTML = resultados.length
     ? `<table class="table table-sm mb-0"><tbody>${
         resultados.map((prod, i) => `
           <tr>
-            <td>${prod.descricao}</td>
+            <td>${prod.descricao || "-"}</td>
             <td>R$ ${parseFloat(prod.valor_unitario||0).toFixed(2)}</td>
             <td><button class="btn btn-success btn-sm"
                         onclick="incluirProdutoPeloIndice('${idSuffix}', ${i})">➕</button></td>
           </tr>`).join("")
       }</tbody></table>`
     : `<div class="text-muted px-2">Nenhum resultado encontrado</div>`;
+
+ 
 }
+
 
 function incluirProdutoPeloIndice(idSuffix, index) {
   const lista = sugestoesTemp[idSuffix];
@@ -211,103 +238,6 @@ function abrirSubstituirProduto(botao, idSuffix) {
   linha.parentNode.insertBefore(novaLinha, linha.nextSibling);
 }
 
-// Mostra sugestões na sublinha
-function normalizarTexto(texto) {
-  return (texto || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")   // Remove acentos
-    .replace(/[\s"'\/\\\-.,]+/g, " ")  // Troca pontuações por espaço
-    .trim();
-}
-
-function mostrarSugestoesSub(input, idSuffix) {
-  const termo = input.value.trim();
-  const container = document.getElementById(`sugestoes-${idSuffix}-sub`);
-  if (!container) return;
-  if (termo.length < 3) {
-    container.innerHTML = '';
-    return;
-  }
-
-  // Divide em termos (removendo espaços extras), normaliza cada um
-  const termos = termo.split(";").map(t => normalizarTexto(t)).filter(Boolean);
-
-  const resultados = todosProdutos.filter(prod => {
-    const descNorm = normalizarTexto(prod.descricao);
-    // Só retorna se TODOS os termos existirem na descrição normalizada
-    return termos.every(term => descNorm.includes(term));
-  }).slice(0, 6);
-
-  sugestoesTemp[`${idSuffix}-sub`] = resultados;
-
-  container.innerHTML = resultados.length
-    ? `<table class="table table-sm mb-0"><tbody>${
-        resultados.map((prod, i) => `
-          <tr onclick="substituirProdutoPeloIndice('${idSuffix}', ${i})" style="cursor:pointer">
-            <td>${prod.descricao}</td>
-            <td>R$ ${parseFloat(prod.valor_unitario||0).toFixed(2)}</td>
-          </tr>`).join("")
-      }</tbody></table>`
-    : `<div class="text-muted px-2">Nenhum resultado encontrado</div>`;
-}
-
-
-function substituirProdutoPeloIndice(idSuffix, index) {
-  const key = `${idSuffix}-sub`;
-  const lista = sugestoesTemp[key];
-  if (!lista || !lista[index]) return alert("Produto não encontrado.");
-
-  const prod = lista[index];
-
-  const linhaSub = document.querySelector(`tr.linha-substituir[data-id-suffix="${idSuffix}"]`);
-  if (!linhaSub) return;
-  const linhaOrig = linhaSub.previousElementSibling;
-  if (!linhaOrig) return;
-
-  // Elementos da linha original
-  const inputQuantidade = linhaOrig.querySelector("input.quantidade");
-  const celulaQtdDesejada = linhaOrig.querySelector(".quantidade-desejada");
-  const inputQtdDesejada = celulaQtdDesejada?.querySelector("input");
-
-  const tdDescricao = linhaOrig.children[1];
-  const tdCusto     = linhaOrig.querySelector(".custo-unitario");
-  const tdVenda     = linhaOrig.querySelector(".venda-unitaria");
-  const tdCodigo    = linhaOrig.children[4];
-
-  // Atualiza diretamente os valores visíveis
-  if (tdDescricao) tdDescricao.textContent = decodeHTMLEntities(prod.descricao || "");
-  if (tdCusto)     tdCusto.textContent     = `R$ ${parseFloat(prod.valor_unitario || 0).toFixed(2)}`;
-  if (tdVenda) {
-    const valorVenda = parseFloat(prod.valor_unitario || 0).toFixed(2);
-    tdVenda.textContent = `R$ ${valorVenda}`;
-    tdVenda.dataset.valorOriginal = valorVenda;
-  }
-  if (tdCodigo) tdCodigo.textContent = prod.codigo_produto || "COD";
-
-  // Zera a quantidade manual
-  if (inputQuantidade) inputQuantidade.value = 0;
-
-  // ❗ NÃO altera a célula quantidade-desejada (mantém input + fórmula + valor)
-
-  // Remove linha de substituição e limpa sugestões
-  linhaSub.remove();
-  limparSugestoes(idSuffix, true);
-
-  const sugestaoSub = document.getElementById(`sugestoes-${idSuffix}-sub`);
-  if (sugestaoSub) sugestaoSub.innerHTML = "";
-
-  const inputSub = document.getElementById(`input-${idSuffix}-sub`);
-  if (inputSub) inputSub.value = "";
-
-  // Limpa linhas órfãs
-  document.querySelectorAll(".linha-substituir")?.forEach(e => e.remove());
-
-  // Reativa blur/eval global se necessário
-  if (typeof simularFocusEBlurEmTodosCamposFormula === "function") {
-    simularFocusEBlurEmTodosCamposFormula();
-  }
-}
 
 
 

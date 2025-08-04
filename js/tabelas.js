@@ -135,9 +135,7 @@ function mostrarSugestoes(input, idSuffix) {
   const resultados = todosProdutos.filter(prod => {
     const descNorm = normalizarTextoFlex(prod.descricao);
     const corresponde = termos.every(term => descNorm.includes(term));
-    console.log(
-      `[${corresponde ? "✔️" : "❌"}] "${prod.descricao}" (${descNorm}) contém todos:`, termos, '=>', corresponde
-    );
+  
     return corresponde;
   }).slice(0, 6);
 
@@ -338,5 +336,4 @@ function confirmarSubstituicao(botao) {
     simularFocusEBlurEmTodosCamposFormula();
   }
 }
-
 
